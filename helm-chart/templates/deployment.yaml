@@ -1,0 +1,81 @@
+{{- range $key, $val := .Values }}
+{{- if kindIs "map" $val }}
+{{- if $val.image }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $val.serviceName }}
+  labels:
+    app: {{ $val.serviceName }}
+spec:
+  replicas: {{ $val.replicaCount }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: {{ $val.serviceName }}
+  template:
+    metadata:
+      labels:
+        app: {{ $val.serviceName }}
+    spec:
+      containers:
+        - name: {{ $val.serviceName }}
+          image: "{{ $val.image.repository }}:{{ $val.image.tag }}"
+          ports:
+            - containerPort: {{ $val.containerPort }}
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              memory: {{ $val.resources.limits.memory }}
+              cpu: {{ $val.resources.limits.cpu }}
+            requests:
+              memory: {{ $val.resources.requests.memory }}
+              cpu: {{ $val.resources.requests.cpu }}
+          readinessProbe:
+            httpGet:
+              path: {{ $val.readinessPath }}
+              port: {{ $val.containerPort }}
+            initialDelaySeconds: {{ $val.initialDelaySeconds }}
+            periodSeconds: 10
+          env:
+            # ======= Postgres Service =======
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:postgresql://postgresql:5432/{{ $val.serviceName }}"
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: yas-infrastructure-secrets
+                  key: POSTGRESQL_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yas-infrastructure-secrets
+                  key: POSTGRESQL_PASSWORD
+            
+            # ======= Kafka Service =======
+            {{- if $val.useKafka }}
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: "kafka-cluster-kafka-bootstrap:9092"
+            {{- end }}
+
+            # ======= Elasticsearch Service =======
+            {{- if $val.useElastic }}
+            - name: ELASTICSEARCH_URL
+              value: "http://elasticsearch-es-http:9200"
+            - name: ELASTICSEARCH_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: yas-infrastructure-secrets
+                  key: ELASTICSEARCH_USERNAME
+            - name: ELASTICSEARCH_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: yas-infrastructure-secrets
+                  key: ELASTICSEARCH_PASSWORD
+            {{- end }}
+            
+---
+{{- end }}
+{{- end }}
+{{- end }}
