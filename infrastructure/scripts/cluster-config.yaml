@@ -1,0 +1,21 @@
+domain: yas.test.com
+postgresql:
+  replicas: 1
+  username: yasadminuser
+  password: admin
+kafka:
+  replicas: 1
+zookeeper:
+  replicas: 1
+elasticsearch:
+  replicas: 1
+  username: yas
+  password: LarUmB3A49NTg9YmgW4=
+keycloak:
+  bootstrapAdmin:
+    username: admin
+    password: admin
+  backofficeRedirectUrl: http://backoffice.yas.test.com
+  storefrontRedirectUrl: http://storefront.yas.test.com
+redis:
+  password: redis

@@ -1,0 +1,8 @@
+elasticsearch:
+  replicas: 1
+  username: yas
+  password: password
+kibana:
+  ingress:
+    className: nginx
+    hostname: kibana.yas.local.com
