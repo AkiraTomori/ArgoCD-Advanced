@@ -1,0 +1,30 @@
+backend:
+  image:
+    repository: akiratomori/yas-search
+    tag: latest
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  nameOverride: search
+  fullnameOverride: search
+  databaseName: search
+  ingress:
+    enabled: false
+  extraEnvFroms:
+    - secretRef:
+        name: yas-elasticsearch-credentials-secret
+  extraVolumes:
+    - name: search-application
+      configMap:
+        name: search-application-configmap
+  extraVolumeMounts:
+    - name: search-application
+      mountPath: /opt/yas/search
+  extraApplicationConfigPaths:
+    - /opt/yas/search/search-application.yaml

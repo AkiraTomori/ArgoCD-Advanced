@@ -1,0 +1,27 @@
+backend:
+  image:
+    repository: akiratomori/yas-order
+    tag: latest
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  nameOverride: order
+  fullnameOverride: order
+  databaseName: order
+  ingress:
+    enabled: false
+  extraVolumes:
+    - name: order-application-config
+      configMap:
+        name: order-application-configmap
+  extraVolumeMounts:
+    - name: order-application-config
+      mountPath: /opt/yas/order
+  extraApplicationConfigPaths:
+    - /opt/yas/order/order-application.yaml  

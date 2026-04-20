@@ -1,0 +1,30 @@
+backend:
+  image:
+    repository: akiratomori/yas-customer
+    tag: latest
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  nameOverride: customer
+  fullnameOverride: customer
+  databaseName: customer
+  ingress:
+    enabled: false
+  extraEnvFroms:
+    - secretRef:
+        name: yas-keycloak-credentials-secret
+  extraVolumes:
+    - name: customer-application
+      configMap:
+        name: customer-application-configmap
+  extraVolumeMounts:
+    - name: customer-application
+      mountPath: /opt/yas/customer
+  extraApplicationConfigPaths:
+    - /opt/yas/customer/customer-application.yaml

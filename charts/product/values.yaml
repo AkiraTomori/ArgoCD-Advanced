@@ -1,0 +1,27 @@
+backend:
+  image:
+    repository: akiratomori/yas-product
+    tag: latest
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  nameOverride: product
+  fullnameOverride: product
+  databaseName: product
+  ingress:
+    enabled: false
+  extraVolumes:
+    - name: product-application-config
+      configMap:
+        name: product-application-configmap
+  extraVolumeMounts:
+    - name: product-application-config
+      mountPath: /opt/yas/product
+  extraApplicationConfigPaths:
+    - /opt/yas/product/product-application.yaml  

@@ -1,0 +1,27 @@
+backend:
+  image:
+    repository: akiratomori/yas-cart
+    tag: latest
+  replicaCount: 1
+  resources: 
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+  nameOverride: cart
+  fullnameOverride: cart
+  databaseName: cart
+  ingress:
+    enabled: false
+  extraVolumes:
+    - name: cart-application-config
+      configMap:
+        name: cart-application-configmap
+  extraVolumeMounts:
+    - name: cart-application-config
+      mountPath: /opt/yas/cart
+  extraApplicationConfigPaths:
+    - /opt/yas/cart/cart-application.yaml
