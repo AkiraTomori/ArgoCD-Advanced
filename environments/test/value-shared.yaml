@@ -10,15 +10,33 @@ replicas:
 
 postgresql:
   host: postgresql
+  secretName: postgresql.credentials
   username: yasadminuser
   password: admin
+  volumeSize: 1Gi
+  postgresqlVersion: "15"
+  maxConnections: "100"
+
+kafka:
+  zookeeperStoreSize: 5Gi
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
 
 elasticsearch:
   username: yas
   password: LarUmB3A49NTg9YmgW4=
 
 redis:
-  password: redis
+  architecture: standalone
+  auth:
+    enabled: true
+    password: redis
 
 keycloak:
   bootstrapAdmin:
