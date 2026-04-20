@@ -1,7 +1,11 @@
+global:
+  domain: ""
+
 hostname: identity.yas.local.com
 backofficeRedirectUrl: http://backoffice.yas.local.com
 storefrontRedirectUrl: http://storefront.yas.local.com
 postgresql:
+  host: ""
   username: yasadminuser
   password: admin
 

@@ -1,0 +1,5 @@
+# Dev overrides for cart
+# Example:
+# backend:
+#   image:
+#     tag: "<immutable-tag>"

@@ -1,0 +1,45 @@
+global:
+  environment: staging
+  domain: yas.staging.com
+
+replicas:
+  postgresql: 1
+  kafka: 1
+  zookeeper: 1
+  elasticsearch: 1
+
+postgresql:
+  host: postgresql.yas-staging
+  username: yasadminuser
+  password: admin
+
+elasticsearch:
+  username: yas
+  password: LarUmB3A49NTg9YmgW4=
+
+redis:
+  password: redis
+
+keycloak:
+  bootstrapAdmin:
+    username: admin
+    password: admin
+  hostname: identity.yas.staging.com
+  backofficeRedirectUrl: http://backoffice.yas.staging.com
+  storefrontRedirectUrl: http://storefront.yas.staging.com
+
+backend:
+  replicaCount: 1
+  databaseConnectionUrl: jdbc:postgresql://postgresql.yas-staging:5432
+  ingress:
+    className: nginx
+  service:
+    type: ClusterIP
+  javaOpts: "-Xmx384m -Xms256m"
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
