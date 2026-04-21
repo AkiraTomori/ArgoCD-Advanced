@@ -1,4 +1,4 @@
-# Default values for backend.
+# Default values for ui.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
@@ -13,6 +13,15 @@ image:
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
+
+deployment:
+  annotations:
+    reloader.stakater.com/search: "true"
+  extraAnnotations: []
+
+extraEnvs: []
+extraVolumes: []
+extraVolumeMounts: []
 
 serviceAccount:
   # Specifies whether a service account should be created
@@ -35,81 +44,12 @@ securityContext: {}
   # readOnlyRootFilesystem: true
   # runAsNonRoot: true
   # runAsUser: 1000
-logbackXmlPath: /opt/yas/config/logback.xml
-httpPort: 80
-metricPort: 8090
-databaseConnectionUrl: jdbc:postgresql://postgresql.postgres:5432
-databaseName: postgres
 
-deployment:
-  annotations:
-    reloader.stakater.com/search: "true"
-  extraAnnotations: []
-
-extraEnvs: []
-#  - name: EXTRA_VARIABLE_NAME
-#    value: extra variable data
-
-extraEnvFroms: []
-#  - secretRef:
-#      name: secret-name-extra
-
-extraObjects: []
-#  - apiVersion: v1
-#    kind: ConfigMap
-#    metadata:
-#      name: example-extra-configmap
-#    data:
-#      example-key: example-data
-#  - apiVersion: v1
-#    kind: Secret
-#    metadata:
-#      name: example-extra-secret
-#    type: Opaque
-#    data:
-#      example-key: base64 encoded data
-
-extraVolumes: []
-#  - name: volume-extra-example
-#    configMap:
-#      name: example-extra-configmap
-
-extraVolumeMounts: []
-#  - mountPath: /example-path
-#    name: volume-extra-example
-
-extraApplicationConfigPaths: []
-#  - /opt/config/application-example.yaml
-
-lifecycle:
-  preStop:
-    exec:
-      command: ["sh", "-c", "sleep 10"]
-
-terminationGracePeriodSeconds: 45
-
-livenessProbe:
-  periodSeconds: 10
-  failureThreshold: 12
-  successThreshold: 1
-  httpGet:
-    path: /actuator/health/liveness
-    port: metric
-
-readinessProbe:
-  periodSeconds: 10
-  failureThreshold: 12
-  successThreshold: 1
-  httpGet:
-    path: /actuator/health/readiness
-    port: metric
-
-serviceMonitor:
-  enabled: true
+httpPort: 3000
 
 service:
   type: ClusterIP
-  port: 80
+  port: 3000
 
 ingress:
   enabled: false
@@ -118,9 +58,10 @@ ingress:
   host: chart-example.local
   path: /
   pathType: ImplementationSpecific
-  tls: {}
-#    secretName: chart-example-tls
-#    host: chart-example.local
+  tls: []
+  #  - secretName: chart-example-tls
+  #    hosts:
+  #      - chart-example.local
 
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious

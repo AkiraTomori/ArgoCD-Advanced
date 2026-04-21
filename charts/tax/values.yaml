@@ -2,14 +2,6 @@ backend:
   image:
     repository: akiratomori/yas-tax
     tag: latest
-  replicaCount: 1
-  resources:
-    requests:
-      cpu: "100m"
-      memory: "256Mi"
-    limits:
-      cpu: "500m"
-      memory: "512Mi"
 
   nameOverride: tax
   fullnameOverride: tax

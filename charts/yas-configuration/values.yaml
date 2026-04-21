@@ -1,7 +1,3 @@
-global:
-  domain: ""
-  otlpEndpoint: ""
-
 credentials:
   postgresql:
     username: yasadminuser
@@ -159,7 +155,7 @@ gatewayRoutesConfig:
               - RewritePath=/api/(?<segment>.*), /$\{segment}
               - TokenRelay=
           - id: promotion_api
-            uri: http://protomotion
+            uri: http://protion
             predicates:
               - Path=/api/promotion/**
             filters:
