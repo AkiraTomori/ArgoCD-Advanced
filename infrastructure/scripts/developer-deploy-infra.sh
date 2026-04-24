@@ -65,6 +65,22 @@ if [[ "${INSTALL_OPERATORS}" == "true" ]]; then
     --create-namespace --namespace observability
 fi
 
+echo "[INFO] Deploying keycloak"
+helm dependency build "${BASE_DIR}/keycloak/keycloak"
+helm upgrade --install keycloak "${BASE_DIR}/keycloak/keycloak" \
+  -n "${TARGET_NAMESPACE}" \
+  -f "${VALUES_FILE}" \
+  --set global.domain=yas.test.com \
+  --set hostname=identity.yas.test.com \
+  --wait --timeout 10m
+
+echo "[INFO] Deploying redis"
+helm dependency build "${BASE_DIR}/redis"
+helm upgrade --install redis "${BASE_DIR}/redis" \
+  -n "${TARGET_NAMESPACE}" \
+  -f "${VALUES_FILE}" \
+  --wait --timeout 10m
+
 echo "[INFO] Deploying postgresql"
 helm dependency build "${BASE_DIR}/postgres/postgresql"
 helm upgrade --install postgresql "${BASE_DIR}/postgres/postgresql" \
@@ -101,22 +117,6 @@ helm upgrade --install akhq akhq/akhq \
 echo "[INFO] Deploying elasticsearch"
 helm dependency build "${BASE_DIR}/elasticsearch/elasticsearch-cluster"
 helm upgrade --install elasticsearch "${BASE_DIR}/elasticsearch/elasticsearch-cluster" \
-  -n "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --wait --timeout 10m
-
-echo "[INFO] Deploying keycloak"
-helm dependency build "${BASE_DIR}/keycloak/keycloak"
-helm upgrade --install keycloak "${BASE_DIR}/keycloak/keycloak" \
-  -n "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --set global.domain=yas.test.com \
-  --set hostname=identity.yas.test.com \
-  --wait --timeout 10m
-
-echo "[INFO] Deploying redis"
-helm dependency build "${BASE_DIR}/redis"
-helm upgrade --install redis "${BASE_DIR}/redis" \
   -n "${TARGET_NAMESPACE}" \
   -f "${VALUES_FILE}" \
   --wait --timeout 10m

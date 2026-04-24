@@ -1,6 +1,6 @@
-hostname: identity.yas.local.com
-backofficeRedirectUrl: http://backoffice.yas.local.com
-storefrontRedirectUrl: http://storefront.yas.local.com
+hostname: identity.yas.test.com
+backofficeRedirectUrl: http://backoffice.yas.test.com
+storefrontRedirectUrl: http://storefront.yas.test.com
 postgresql:
   username: yasadminuser
   password: admin

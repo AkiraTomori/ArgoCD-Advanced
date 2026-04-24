@@ -1,4 +1,4 @@
-hostname: grafana.yas.local.com
+hostname: grafana.yas.test.com
 grafana:
   username: admin
   password: admin

@@ -3,4 +3,4 @@ elasticsearch:
 kibana:
   ingress:
     className: nginx
-    hostname: kibana.yas.local.com
+    hostname: kibana.test.local.com
