@@ -2,7 +2,7 @@ apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
   name: kafka-cluster
-  annotations:
+  kubectl get kafka,kafkanodepool -n kafka  annotations:
     strimzi.io/node-pools: enabled
     strimzi.io/kraft: enabled
 spec:
