@@ -155,7 +155,7 @@ echo "[INFO] Deploying grafana custom resources"
 helm dependency build "${BASE_DIR}/observability/grafana"
 helm upgrade --install grafana "${BASE_DIR}/observability/grafana" \
   -n "${TARGET_NAMESPACE}" \
-  --set hotname="grafana.yas.test.com" \
+  --set hostname="grafana.yas.test.com" \
   --wait --timeout 10m
 
 echo "[INFO] Full infrastructure deployment completed for namespace ${TARGET_NAMESPACE}"
