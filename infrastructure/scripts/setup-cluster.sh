@@ -1,179 +1,123 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/bash
+set -x
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
-BASE_DIR="${REPO_ROOT}/infrastructure/base"
-TARGET_NAMESPACE="${TARGET_NAMESPACE:-}"
-VALUES_FILE="${VALUES_FILE:-${REPO_ROOT}/environments/test/values-shared.yaml}"
-INSTALL_OPERATORS="${INSTALL_OPERATORS:-false}"
-DOMAIN="${DOMAIN:-yas.test.com}"
-POSTGRES_OPERATOR_NAMESPACE_DEFAULT="${POSTGRES_OPERATOR_NAMESPACE_DEFAULT:-postgres}"
-KAFKA_OPERATOR_NAMESPACE_DEFAULT="${KAFKA_OPERATOR_NAMESPACE_DEFAULT:-kafka}"
-ELASTIC_OPERATOR_NAMESPACE_DEFAULT="${ELASTIC_OPERATOR_NAMESPACE_DEFAULT:-elasticsearch}"
-CERT_MANAGER_NAMESPACE_DEFAULT="${CERT_MANAGER_NAMESPACE_DEFAULT:-cert-manager}"
-OTEL_OPERATOR_NAMESPACE_DEFAULT="${OTEL_OPERATOR_NAMESPACE_DEFAULT:-observability}"
-GRAFANA_OPERATOR_NAMESPACE_DEFAULT="${GRAFANA_OPERATOR_NAMESPACE_DEFAULT:-observability}"
+# Add chart repos and update
+helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator
+helm repo add strimzi https://strimzi.io/charts/
+helm repo add akhq https://akhq.io/
+helm repo add elastic https://helm.elastic.co
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
 
-if [[ -z "${TARGET_NAMESPACE}" ]]; then
-  echo "ERROR: TARGET_NAMESPACE is required"
-  echo "Usage: TARGET_NAMESPACE=test-<user>-<svc> ${BASH_SOURCE[0]}"
-  exit 1
-fi
+#Read configuration value from cluster-config.yaml file
+read -rd '' DOMAIN POSTGRESQL_REPLICAS POSTGRESQL_USERNAME POSTGRESQL_PASSWORD \
+KAFKA_REPLICAS ZOOKEEPER_REPLICAS ELASTICSEARCH_REPLICAES \
+GRAFANA_USERNAME GRAFANA_PASSWORD \
+< <(yq -r '.domain, .postgresql.replicas, .postgresql.username,
+ .postgresql.password, .kafka.replicas, .zookeeper.replicas,
+ .elasticsearch.replicas, .grafana.username, .grafana.password' ./cluster-config.yaml)
 
-echo "[INFO] Namespace: ${TARGET_NAMESPACE}"
-echo "[INFO] Values file: ${VALUES_FILE}"
+# Install the postgres-operator
+helm upgrade --install postgres-operator postgres-operator-charts/postgres-operator \
+ --create-namespace --namespace postgres
 
-kubectl create namespace "${TARGET_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+#Install postgresql
+helm upgrade --install postgres ./postgres/postgresql \
+--create-namespace --namespace postgres \
+--set replicas="$POSTGRESQL_REPLICAS" \
+--set username="$POSTGRESQL_USERNAME" \
+--set password="$POSTGRESQL_PASSWORD"
 
-# Add chart repos and update.
-helm repo add postgres-operator-charts https://opensource.zalando.com/postgres-operator/charts/postgres-operator >/dev/null 2>&1 || true
-helm repo add strimzi https://strimzi.io/charts/ >/dev/null 2>&1 || true
-helm repo add akhq https://akhq.io/ >/dev/null 2>&1 || true
-helm repo add elastic https://helm.elastic.co >/dev/null 2>&1 || true
-helm repo add grafana https://grafana.github.io/helm-charts >/dev/null 2>&1 || true
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts >/dev/null 2>&1 || true
-helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts >/dev/null 2>&1 || true
-helm repo add jetstack https://charts.jetstack.io >/dev/null 2>&1 || true
-helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null 2>&1 || true
-helm repo update >/dev/null
+#Install pgadmin
+pg_admin_hostname="pgadmin.$DOMAIN" yq -i '.hostname=env(pg_admin_hostname)' ./postgres/pgadmin/values.yaml
+helm upgrade --install pgadmin ./postgres/pgadmin \
+--create-namespace --namespace postgres \
 
-resolve_release_namespace() {
-  local release_name="$1"
-  local default_namespace="$2"
-  local existing_namespace
+#Install strimzi-kafka-operator
+helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
+--create-namespace --namespace kafka
 
-  existing_namespace="$(helm list -A --filter "^${release_name}$" 2>/dev/null | awk 'NR==2 {print $2}')"
-  if [[ -n "${existing_namespace}" ]]; then
-    echo "${existing_namespace}"
-  else
-    echo "${default_namespace}"
-  fi
-}
+#Install kafka and postgresql connector
+helm upgrade --install kafka-cluster ./kafka/kafka-cluster \
+--create-namespace --namespace kafka \
+--set kafka.replicas="$KAFKA_REPLICAS" \
+--set zookeeper.replicas="$ZOOKEEPER_REPLICAS" \
+--set postgresql.username="$POSTGRESQL_USERNAME" \
+--set postgresql.password="$POSTGRESQL_PASSWORD"
 
-if [[ "${INSTALL_OPERATORS}" == "true" ]]; then
-  echo "[INFO] Installing cluster-level operators and CRDs"
-
-  POSTGRES_OPERATOR_NAMESPACE="$(resolve_release_namespace "postgres-operator" "${POSTGRES_OPERATOR_NAMESPACE_DEFAULT}")"
-  KAFKA_OPERATOR_NAMESPACE="$(resolve_release_namespace "kafka-operator" "${KAFKA_OPERATOR_NAMESPACE_DEFAULT}")"
-  ELASTIC_OPERATOR_NAMESPACE="$(resolve_release_namespace "elastic-operator" "${ELASTIC_OPERATOR_NAMESPACE_DEFAULT}")"
-  CERT_MANAGER_NAMESPACE="$(resolve_release_namespace "cert-manager" "${CERT_MANAGER_NAMESPACE_DEFAULT}")"
-  OTEL_OPERATOR_NAMESPACE="$(resolve_release_namespace "opentelemetry-operator" "${OTEL_OPERATOR_NAMESPACE_DEFAULT}")"
-  GRAFANA_OPERATOR_NAMESPACE="$(resolve_release_namespace "grafana-operator" "${GRAFANA_OPERATOR_NAMESPACE_DEFAULT}")"
-
-  echo "[INFO] Operator namespace (postgres-operator): ${POSTGRES_OPERATOR_NAMESPACE}"
-  echo "[INFO] Operator namespace (kafka-operator): ${KAFKA_OPERATOR_NAMESPACE}"
-  echo "[INFO] Operator namespace (elastic-operator): ${ELASTIC_OPERATOR_NAMESPACE}"
-  echo "[INFO] Operator namespace (cert-manager): ${CERT_MANAGER_NAMESPACE}"
-  echo "[INFO] Operator namespace (opentelemetry-operator): ${OTEL_OPERATOR_NAMESPACE}"
-  echo "[INFO] Operator namespace (grafana-operator): ${GRAFANA_OPERATOR_NAMESPACE}"
-
-  kubectl create namespace "${POSTGRES_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace "${KAFKA_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace "${ELASTIC_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace "${CERT_MANAGER_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace "${OTEL_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-  kubectl create namespace "${GRAFANA_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
-
-  helm upgrade --install postgres-operator postgres-operator-charts/postgres-operator \
-    --create-namespace --namespace "${POSTGRES_OPERATOR_NAMESPACE}"
-
-  helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
-    --create-namespace --namespace "${KAFKA_OPERATOR_NAMESPACE}"
-
-  helm upgrade --install elastic-operator elastic/eck-operator \
-    --create-namespace --namespace "${ELASTIC_OPERATOR_NAMESPACE}"
-
-  helm upgrade --install cert-manager jetstack/cert-manager \
-    --namespace "${CERT_MANAGER_NAMESPACE}" \
-    --create-namespace \
-    --version v1.12.0 \
-    --set installCRDs=true \
-    --set prometheus.enabled=false \
-    --set webhook.timeoutSeconds=4 \
-    --set admissionWebhooks.certManager.create=true
-
-  helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
-    --create-namespace --namespace "${OTEL_OPERATOR_NAMESPACE}"
-
-  helm upgrade --install grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator \
-    --version v5.0.2 \
-    --create-namespace --namespace "${GRAFANA_OPERATOR_NAMESPACE}"
-fi
-
-echo "[INFO] Installing PostgreSQL"
-helm dependency build "${BASE_DIR}/postgres/postgresql"
-helm upgrade --install postgres "${BASE_DIR}/postgres/postgresql" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --wait --timeout 10m
-
-echo "[INFO] Installing pgadmin"
-helm dependency build "${BASE_DIR}/postgres/pgadmin"
-helm upgrade --install pgadmin "${BASE_DIR}/postgres/pgadmin" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --wait --timeout 10m
-
-echo "[INFO] Installing Kafka cluster"
-helm dependency build "${BASE_DIR}/kafka/kafka-cluster"
-helm upgrade --install kafka-cluster "${BASE_DIR}/kafka/kafka-cluster" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --wait --timeout 10m
-
-echo "[INFO] Installing Zookeeper"
-helm dependency build "${BASE_DIR}/zookeeper"
-helm upgrade --install zookeeper "${BASE_DIR}/zookeeper" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  --wait --timeout 10m
-
-echo "[INFO] Installing AKHQ"
+#Install akhq
+akhq_hostname="akhq.$DOMAIN" yq -i '.hostname=env(akhq_hostname)' ./kafka/akhq.values.yaml
 helm upgrade --install akhq akhq/akhq \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  --values "${BASE_DIR}/kafka/akhq.values.yaml" \
-  --wait --timeout 10m
+--create-namespace --namespace kafka \
+--values ./kafka/akhq.values.yaml
 
-echo "[INFO] Installing Elasticsearch"
-helm dependency build "${BASE_DIR}/elasticsearch/elasticsearch-cluster"
-helm upgrade --install elasticsearch-cluster "${BASE_DIR}/elasticsearch/elasticsearch-cluster" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${VALUES_FILE}" \
-  --wait --timeout 10m
+#Install elastic-operator
+helm upgrade --install elastic-operator elastic/eck-operator \
+ --create-namespace --namespace elasticsearch
 
-echo "[INFO] Installing Loki"
+# Install elasticsearch-cluster
+helm upgrade --install elasticsearch-cluster ./elasticsearch/elasticsearch-cluster \
+--create-namespace --namespace elasticsearch \
+--set elasticsearch.replicas="$ELASTICSEARCH_REPLICAES" \
+--set kibana.ingress.hostname="kibana.$DOMAIN"
+
+#Install loki
 helm upgrade --install loki grafana/loki \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${BASE_DIR}/observability/loki.values.yaml" \
-  --wait --timeout 10m
+ --create-namespace --namespace observability \
+ -f ./observability/loki.values.yaml
 
-echo "[INFO] Installing Tempo"
+#Install tempo
 helm upgrade --install tempo grafana/tempo \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${BASE_DIR}/observability/tempo.values.yaml" \
-  --wait --timeout 10m
+--create-namespace --namespace observability \
+-f ./observability/tempo.values.yaml
 
-echo "[INFO] Installing OpenTelemetry operator and collector"
-helm dependency build "${BASE_DIR}/observability/opentelemetry"
-helm upgrade --install opentelemetry-collector "${BASE_DIR}/observability/opentelemetry" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  --wait --timeout 10m
+#Install cert manager
+helm upgrade --install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.12.0 \
+  --set installCRDs=true \
+  --set prometheus.enabled=false \
+  --set webhook.timeoutSeconds=4 \
+  --set admissionWebhooks.certManager.create=true
 
-echo "[INFO] Installing Promtail"
+#Install opentelemetry-operator
+helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
+--create-namespace --namespace observability
+
+#Install opentelemetry-collector
+helm upgrade --install opentelemetry-collector ./observability/opentelemetry \
+--create-namespace --namespace observability
+
+#Install promtail
 helm upgrade --install promtail grafana/promtail \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  --values "${BASE_DIR}/observability/promtail.values.yaml" \
-  --wait --timeout 10m
+--create-namespace --namespace observability \
+--values ./observability/promtail.values.yaml
 
-echo "[INFO] Installing Prometheus stack"
+#Install prometheus + grafana
+grafana_hostname="grafana.$DOMAIN" yq -i '.hostname=env(grafana_hostname)' ./observability/prometheus.values.yaml
+postgresql_username="$POSTGRESQL_USERNAME" yq -i '.grafana."grafana.ini".database.user=env(postgresql_username)' ./observability/prometheus.values.yaml
+postgresql_password="$POSTGRESQL_PASSWORD" yq -i '.grafana."grafana.ini".database.password=env(postgresql_password)' ./observability/prometheus.values.yaml
 helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  -f "${BASE_DIR}/observability/prometheus.values.yaml" \
-  --wait --timeout 10m
+ --create-namespace --namespace observability \
+-f ./observability/prometheus.values.yaml \
 
-echo "[INFO] Installing Grafana operator and resources"
-helm dependency build "${BASE_DIR}/observability/grafana"
-helm upgrade --install grafana "${BASE_DIR}/observability/grafana" \
-  --create-namespace --namespace "${TARGET_NAMESPACE}" \
-  --set hostname="grafana.${DOMAIN}" \
-  --wait --timeout 10m
+#Install grafana operator
+helm upgrade --install grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator \
+--version v5.0.2 \
+--create-namespace --namespace observability
+
+#Add datasource and dashboard to grafana
+helm upgrade --install grafana ./observability/grafana \
+--create-namespace --namespace observability \
+--set hotname="grafana.$DOMAIN" \
+--set grafana.username="$GRAFANA_USERNAME" \
+--set grafana.password="$GRAFANA_PASSWORD" \
+--set postgresql.username="$POSTGRESQL_USERNAME" \
+--set postgresql.password="$POSTGRESQL_PASSWORD"
+
+helm upgrade --install zookeeper ./zookeeper \
+ --namespace zookeeper --create-namespace
