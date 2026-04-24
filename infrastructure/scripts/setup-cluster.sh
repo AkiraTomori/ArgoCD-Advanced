@@ -8,6 +8,7 @@ TARGET_NAMESPACE="${TARGET_NAMESPACE:-}"
 VALUES_FILE="${VALUES_FILE:-${REPO_ROOT}/environments/test/values-shared.yaml}"
 INSTALL_OPERATORS="${INSTALL_OPERATORS:-false}"
 DOMAIN="${DOMAIN:-yas.test.com}"
+OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-postgres}"
 
 if [[ -z "${TARGET_NAMESPACE}" ]]; then
   echo "ERROR: TARGET_NAMESPACE is required"
@@ -32,20 +33,54 @@ helm repo add jetstack https://charts.jetstack.io >/dev/null 2>&1 || true
 helm repo add bitnami https://charts.bitnami.com/bitnami >/dev/null 2>&1 || true
 helm repo update >/dev/null
 
+resolve_release_namespace() {
+  local release_name="$1"
+  local default_namespace="$2"
+  local existing_namespace
+
+  existing_namespace="$(helm list -A --filter "^${release_name}$" 2>/dev/null | awk 'NR==2 {print $2}')"
+  if [[ -n "${existing_namespace}" ]]; then
+    echo "${existing_namespace}"
+  else
+    echo "${default_namespace}"
+  fi
+}
+
 if [[ "${INSTALL_OPERATORS}" == "true" ]]; then
   echo "[INFO] Installing cluster-level operators and CRDs"
 
+  POSTGRES_OPERATOR_NAMESPACE="$(resolve_release_namespace "postgres-operator" "${OPERATOR_NAMESPACE}")"
+  KAFKA_OPERATOR_NAMESPACE="$(resolve_release_namespace "kafka-operator" "${OPERATOR_NAMESPACE}")"
+  ELASTIC_OPERATOR_NAMESPACE="$(resolve_release_namespace "elastic-operator" "${OPERATOR_NAMESPACE}")"
+  CERT_MANAGER_NAMESPACE="$(resolve_release_namespace "cert-manager" "${OPERATOR_NAMESPACE}")"
+  OTEL_OPERATOR_NAMESPACE="$(resolve_release_namespace "opentelemetry-operator" "${OPERATOR_NAMESPACE}")"
+  GRAFANA_OPERATOR_NAMESPACE="$(resolve_release_namespace "grafana-operator" "${OPERATOR_NAMESPACE}")"
+
+  echo "[INFO] Operator namespace (postgres-operator): ${POSTGRES_OPERATOR_NAMESPACE}"
+  echo "[INFO] Operator namespace (kafka-operator): ${KAFKA_OPERATOR_NAMESPACE}"
+  echo "[INFO] Operator namespace (elastic-operator): ${ELASTIC_OPERATOR_NAMESPACE}"
+  echo "[INFO] Operator namespace (cert-manager): ${CERT_MANAGER_NAMESPACE}"
+  echo "[INFO] Operator namespace (opentelemetry-operator): ${OTEL_OPERATOR_NAMESPACE}"
+  echo "[INFO] Operator namespace (grafana-operator): ${GRAFANA_OPERATOR_NAMESPACE}"
+
+  kubectl create namespace "${POSTGRES_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace "${KAFKA_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace "${ELASTIC_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace "${CERT_MANAGER_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace "${OTEL_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+  kubectl create namespace "${GRAFANA_OPERATOR_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+
   helm upgrade --install postgres-operator postgres-operator-charts/postgres-operator \
-    --create-namespace --namespace "${TARGET_NAMESPACE}"
+    --create-namespace --namespace "${POSTGRES_OPERATOR_NAMESPACE}"
 
   helm upgrade --install kafka-operator strimzi/strimzi-kafka-operator \
-    --create-namespace --namespace "${TARGET_NAMESPACE}"
+    --create-namespace --namespace "${KAFKA_OPERATOR_NAMESPACE}"
 
   helm upgrade --install elastic-operator elastic/eck-operator \
-    --create-namespace --namespace "${TARGET_NAMESPACE}"
+    --create-namespace --namespace "${ELASTIC_OPERATOR_NAMESPACE}"
 
   helm upgrade --install cert-manager jetstack/cert-manager \
-    --namespace "${TARGET_NAMESPACE}" \
+    --namespace "${CERT_MANAGER_NAMESPACE}" \
     --create-namespace \
     --version v1.12.0 \
     --set installCRDs=true \
@@ -54,11 +89,11 @@ if [[ "${INSTALL_OPERATORS}" == "true" ]]; then
     --set admissionWebhooks.certManager.create=true
 
   helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
-    --create-namespace --namespace "${TARGET_NAMESPACE}"
+    --create-namespace --namespace "${OTEL_OPERATOR_NAMESPACE}"
 
   helm upgrade --install grafana-operator oci://ghcr.io/grafana-operator/helm-charts/grafana-operator \
     --version v5.0.2 \
-    --create-namespace --namespace "${TARGET_NAMESPACE}"
+    --create-namespace --namespace "${GRAFANA_OPERATOR_NAMESPACE}"
 fi
 
 echo "[INFO] Installing PostgreSQL"
