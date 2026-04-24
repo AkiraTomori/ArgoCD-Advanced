@@ -933,7 +933,7 @@ spec:
         alwaysDisplayInConsole: false
         clientAuthenticatorType: client-secret
         redirectUris:
-          - http://api.yas.local.com/*
+          - http://api.yas.test.com/*
           - http://localhost:8080/*
           - http://localhost:8081/*
           - http://localhost:8083/*
@@ -947,7 +947,7 @@ spec:
           - http://localhost:8092/*
           - http://localhost:8093/*
         webOrigins:
-          - http://api.yas.local.com
+          - http://api.yas.test.com
           - http://localhost:8080
           - http://localhost:8081
           - http://localhost:8083
