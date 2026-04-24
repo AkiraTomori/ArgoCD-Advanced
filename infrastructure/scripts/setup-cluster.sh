@@ -8,7 +8,12 @@ TARGET_NAMESPACE="${TARGET_NAMESPACE:-}"
 VALUES_FILE="${VALUES_FILE:-${REPO_ROOT}/environments/test/values-shared.yaml}"
 INSTALL_OPERATORS="${INSTALL_OPERATORS:-false}"
 DOMAIN="${DOMAIN:-yas.test.com}"
-OPERATOR_NAMESPACE="${OPERATOR_NAMESPACE:-postgres}"
+POSTGRES_OPERATOR_NAMESPACE_DEFAULT="${POSTGRES_OPERATOR_NAMESPACE_DEFAULT:-postgres}"
+KAFKA_OPERATOR_NAMESPACE_DEFAULT="${KAFKA_OPERATOR_NAMESPACE_DEFAULT:-kafka}"
+ELASTIC_OPERATOR_NAMESPACE_DEFAULT="${ELASTIC_OPERATOR_NAMESPACE_DEFAULT:-elasticsearch}"
+CERT_MANAGER_NAMESPACE_DEFAULT="${CERT_MANAGER_NAMESPACE_DEFAULT:-cert-manager}"
+OTEL_OPERATOR_NAMESPACE_DEFAULT="${OTEL_OPERATOR_NAMESPACE_DEFAULT:-observability}"
+GRAFANA_OPERATOR_NAMESPACE_DEFAULT="${GRAFANA_OPERATOR_NAMESPACE_DEFAULT:-observability}"
 
 if [[ -z "${TARGET_NAMESPACE}" ]]; then
   echo "ERROR: TARGET_NAMESPACE is required"
@@ -49,12 +54,12 @@ resolve_release_namespace() {
 if [[ "${INSTALL_OPERATORS}" == "true" ]]; then
   echo "[INFO] Installing cluster-level operators and CRDs"
 
-  POSTGRES_OPERATOR_NAMESPACE="$(resolve_release_namespace "postgres-operator" "${OPERATOR_NAMESPACE}")"
-  KAFKA_OPERATOR_NAMESPACE="$(resolve_release_namespace "kafka-operator" "${OPERATOR_NAMESPACE}")"
-  ELASTIC_OPERATOR_NAMESPACE="$(resolve_release_namespace "elastic-operator" "${OPERATOR_NAMESPACE}")"
-  CERT_MANAGER_NAMESPACE="$(resolve_release_namespace "cert-manager" "${OPERATOR_NAMESPACE}")"
-  OTEL_OPERATOR_NAMESPACE="$(resolve_release_namespace "opentelemetry-operator" "${OPERATOR_NAMESPACE}")"
-  GRAFANA_OPERATOR_NAMESPACE="$(resolve_release_namespace "grafana-operator" "${OPERATOR_NAMESPACE}")"
+  POSTGRES_OPERATOR_NAMESPACE="$(resolve_release_namespace "postgres-operator" "${POSTGRES_OPERATOR_NAMESPACE_DEFAULT}")"
+  KAFKA_OPERATOR_NAMESPACE="$(resolve_release_namespace "kafka-operator" "${KAFKA_OPERATOR_NAMESPACE_DEFAULT}")"
+  ELASTIC_OPERATOR_NAMESPACE="$(resolve_release_namespace "elastic-operator" "${ELASTIC_OPERATOR_NAMESPACE_DEFAULT}")"
+  CERT_MANAGER_NAMESPACE="$(resolve_release_namespace "cert-manager" "${CERT_MANAGER_NAMESPACE_DEFAULT}")"
+  OTEL_OPERATOR_NAMESPACE="$(resolve_release_namespace "opentelemetry-operator" "${OTEL_OPERATOR_NAMESPACE_DEFAULT}")"
+  GRAFANA_OPERATOR_NAMESPACE="$(resolve_release_namespace "grafana-operator" "${GRAFANA_OPERATOR_NAMESPACE_DEFAULT}")"
 
   echo "[INFO] Operator namespace (postgres-operator): ${POSTGRES_OPERATOR_NAMESPACE}"
   echo "[INFO] Operator namespace (kafka-operator): ${KAFKA_OPERATOR_NAMESPACE}"
