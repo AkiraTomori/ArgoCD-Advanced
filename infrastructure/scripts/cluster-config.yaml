@@ -1,4 +1,4 @@
-domain: yas.local.com
+domain: yas.test.com
 postgresql:
   replicas: 1
   username: yasadminuser
@@ -15,8 +15,8 @@ keycloak:
   bootstrapAdmin:
     username: admin
     password: admin
-  backofficeRedirectUrl: http://backoffice.yas.local.com
-  storefrontRedirectUrl: http://storefront.yas.local.com
+  backofficeRedirectUrl: http://backoffice.yas.test.com
+  storefrontRedirectUrl: http://storefront.yas.test.com
 grafana:
   username: admin
   password: admin

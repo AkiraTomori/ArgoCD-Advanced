@@ -4,14 +4,11 @@ This folder contains scripts for per-developer test environments used by Jenkins
 
 ## Script: `developer-deploy-infra.sh`
 
-Deploy namespace-scoped infrastructure into a target namespace using charts under `infrastructure/base`:
+Deploy namespace-scoped infrastructure into a single target namespace using scripts under `infrastructure/scripts`:
 
-- postgresql
-- pgadmin
-- kafka
-- elasticsearch
-- keycloak
-- redis
+- setup-keycloak.sh
+- setup-redis.sh
+- setup-cluster.sh
 
 ### Required env vars
 
@@ -30,7 +27,39 @@ INSTALL_OPERATORS=false \
 bash infrastructure/scripts/developer-deploy-infra.sh
 ```
 
+## Recommended deployment order (single namespace)
+
+For step-by-step deployment, follow this sequence:
+
+1. Install Keycloak
+
+```bash
+./setup-keycloak.sh
+```
+
+2. Install Redis
+
+```bash
+./setup-redis.sh
+```
+
+3. Install cluster infrastructure (PostgreSQL, Kafka, Elasticsearch, Observability)
+
+```bash
+./setup-cluster.sh
+```
+
+4. Deploy YAS configuration
+
+```bash
+./deploy-yas-configuration.sh
+```
+
+Keycloak may temporarily CrashLoopBackOff before PostgreSQL is running. This is expected. After PostgreSQL is healthy, Keycloak should recover automatically.
+
+All infrastructure components are deployed into the same namespace provided by `TARGET_NAMESPACE`.
+
 ## Notes
 
 - This script intentionally focuses on assignment requirements #4 and #5.
-- Observability stack is excluded.
+- Observability components are installed by `setup-cluster.sh`.

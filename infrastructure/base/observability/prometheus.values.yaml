@@ -1,4 +1,4 @@
-hostname: &hostname grafana.yas.local.com
+hostname: &hostname grafana.yas.test.com
 prometheus:
   prometheusSpec:
     enableRemoteWriteReceiver: true

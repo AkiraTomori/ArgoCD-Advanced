@@ -1,4 +1,4 @@
-hostname: &hostname pgoperator.yas.local.com
+hostname: &hostname pgoperator.yas.test.com
 ingress:
   enabled: true
   annotations:

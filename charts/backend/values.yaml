@@ -18,10 +18,10 @@ fullnameOverride: ""
 hostAliases:
   - ip: "10.98.51.76"  # ingress-nginx-controller ClusterIP
     hostnames:
-      - "identity.yas.local.com"
-      - "backoffice.yas.local.com"
-      - "storefront.yas.local.com"
-      - "api.yas.local.com"
+      - "identity.yas.test.com"
+      - "backoffice.yas.test.com"
+      - "storefront.yas.test.com"
+      - "api.yas.test.com"
 
 serviceAccount:
   # Specifies whether a service account should be created
