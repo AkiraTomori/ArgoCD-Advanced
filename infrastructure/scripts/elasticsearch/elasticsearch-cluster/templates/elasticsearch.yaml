@@ -14,5 +14,13 @@ spec:
   nodeSets:
     - name: node
       count: {{ .Values.elasticsearch.replicas }}
+      podTemplate:
+        spec:
+          securityContext:
+            fsGroup: 1000
+          containers: null
+          volumes:
+            - name: elasticsearch-data
+              emptyDir: {}
       config:
         node.store.allow_mmap: false

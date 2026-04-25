@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD
-    path: infrastructure/base/keycloak/keycloak
+    path: infrastructure/scripts/keycloak
     helm:
       valueFiles:
         - ../../../../environments/staging/values-shared.yaml

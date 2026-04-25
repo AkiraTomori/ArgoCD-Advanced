@@ -4,3 +4,15 @@ config:
   snippets:
     pipelineStages:
       - docker: {}
+    extraRelabelConfigs:
+      - action: keep
+        source_labels:
+          - __meta_kubernetes_namespace
+        regex: observability
+
+daemonset:
+  enabled: false
+
+deployment:
+  enabled: true
+  replicaCount: 1

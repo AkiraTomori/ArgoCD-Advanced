@@ -11,7 +11,7 @@ spec:
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD
-    path: infrastructure/base/elasticsearch/elasticsearch-cluster
+    path: infrastructure/scripts/elasticsearch/elasticsearch-cluster
     helm:
       valueFiles:
         - ../../../../environments/staging/values-shared.yaml

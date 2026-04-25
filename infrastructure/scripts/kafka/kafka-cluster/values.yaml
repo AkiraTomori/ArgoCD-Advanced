@@ -7,5 +7,5 @@ postgresql:
   username: yasadminuser
   password: admin
 debeziumConnect:
-  image: ghcr.io/nashtech-garage/debezium-connect-postgresql:latest
+  image: quay.io/strimzi/kafka:0.51.0-kafka-4.1.0
   buildImage: false #Enabled when build debezium-connect-postgresql image

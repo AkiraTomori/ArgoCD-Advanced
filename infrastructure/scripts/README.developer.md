@@ -59,6 +59,35 @@ Keycloak may temporarily CrashLoopBackOff before PostgreSQL is running. This is 
 
 All infrastructure components are deployed into the same namespace provided by `TARGET_NAMESPACE`.
 
+## Safe Minikube Restart
+
+To avoid recurrent CrashLoopBackOff after `minikube stop/start` (especially on Kafka and Elasticsearch), use:
+
+```bash
+./minikube-start-safe.sh
+```
+
+What this script does:
+
+- Starts minikube (can be skipped with `START_CLUSTER=false`)
+- Waits for nodes to become Ready
+- Detects known Kafka crash signature (`Invalid cluster.id`) and auto-heals storage path/PVC
+- Detects known Elasticsearch lock/permission signature (`node.lock`, `AccessDeniedException`) and auto-heals storage path
+- Prints final status for Kafka and Elasticsearch pods
+
+Examples:
+
+```bash
+# Start cluster and run self-heal checks
+./minikube-start-safe.sh
+
+# If minikube is already started
+START_CLUSTER=false ./minikube-start-safe.sh
+
+# Use a non-default minikube profile
+MINIKUBE_PROFILE=my-profile ./minikube-start-safe.sh
+```
+
 ## Notes
 
 - This script intentionally focuses on assignment requirements #4 and #5.
