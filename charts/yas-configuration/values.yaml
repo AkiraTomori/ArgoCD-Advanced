@@ -58,7 +58,7 @@ applicationConfig:
       oauth2:
         resourceserver:
           jwt:
-            issuer-uri: http://identity.yas.local.com/realms/Yas
+            issuer-uri: http://identity.yas.test.com/realms/Yas
 
     datasource:
       url:
@@ -71,8 +71,8 @@ applicationConfig:
 
   springdoc:
     oauthflow:
-      authorization-url: http://identity.yas.local.com/realms/Yas/protocol/openid-connect/auth
-      token-url: http://identity.yas.local.com/realms/Yas/protocol/openid-connect/token
+      authorization-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/auth
+      token-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/token
 
   yas:
     services:
@@ -155,7 +155,7 @@ gatewayRoutesConfig:
               - RewritePath=/api/(?<segment>.*), /$\{segment}
               - TokenRelay=
           - id: promotion_api
-            uri: http://protion
+            uri: http://promotion
             predicates:
               - Path=/api/promotion/**
             filters:
@@ -213,7 +213,7 @@ backofficeBffExtraConfig:
         client:
           provider:
             keycloak:
-              issuer-uri: http://identity.yas.local.com/realms/Yas
+              issuer-uri: http://identity.yas.test.com/realms/Yas
           registration:
             api-client:
               provider: keycloak
@@ -233,7 +233,7 @@ storefrontBffExtraConfig:
         client:
           provider:
             keycloak:
-              issuer-uri: http://identity.yas.local.com/realms/Yas
+              issuer-uri: http://identity.yas.test.com/realms/Yas
           registration:
             api-client:
               provider: keycloak
@@ -247,12 +247,12 @@ mediaApplicationConfig:
     servlet:
       context-path: /media
   yas:
-    publicUrl: http://api.yas.local.com/media
+    publicUrl: http://api.yas.test.com/media
 
 # Customer application config custom
 customerApplicationConfig:
   keycloak:
-    auth-server-url: http://identity.yas.local.com
+    auth-server-url: http://identity.yas.test.com
     realm: Yas
     resource: customer-management
     credentials:
@@ -269,7 +269,7 @@ searchApplicationConfig:
 paymentPaypalApplicationConfig:
   yas:
     public:
-      url: http://storefront.yas.local.com/complete-payment
+      url: http://storefront.yas.test.com/complete-payment
 
 # Recommendation application config custom
 recommendationApplicationConfig:
