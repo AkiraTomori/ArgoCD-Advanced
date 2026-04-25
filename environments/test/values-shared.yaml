@@ -9,7 +9,7 @@ replicas:
   elasticsearch: 1
 
 postgresql:
-  host: postgresql
+  host: postgresql.postgres.svc.cluster.local
   secretName: postgresql.credentials
   username: yasadminuser
   password: admin
@@ -46,9 +46,66 @@ keycloak:
   backofficeRedirectUrl: http://backoffice.yas.test.com
   storefrontRedirectUrl: http://storefront.yas.test.com
 
+applicationConfig:
+  spring:
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://identity.yas.test.com/realms/Yas
+  springdoc:
+    oauthflow:
+      authorization-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/auth
+      token-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/token
+
+backofficeBffExtraConfig:
+  spring:
+    data:
+      redis:
+        host: redis-master.redis.svc.cluster.local
+    security:
+      oauth2:
+        client:
+          provider:
+            keycloak:
+              issuer-uri: http://identity.yas.test.com/realms/Yas
+
+storefrontBffExtraConfig:
+  spring:
+    data:
+      redis:
+        host: redis-master.redis.svc.cluster.local
+    security:
+      oauth2:
+        client:
+          provider:
+            keycloak:
+              issuer-uri: http://identity.yas.test.com/realms/Yas
+
+mediaApplicationConfig:
+  yas:
+    publicUrl: http://api.yas.test.com/media
+
+customerApplicationConfig:
+  keycloak:
+    auth-server-url: http://identity.yas.test.com
+
+paymentPaypalApplicationConfig:
+  yas:
+    public:
+      url: http://storefront.yas.test.com/complete-payment
+
+sampledataApplicationConfig:
+  spring:
+    datasource:
+      product:
+        url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/product
+      media:
+        url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/media
+
 backend:
   replicaCount: 1
-  databaseConnectionUrl: jdbc:postgresql://postgresql:5432
+  databaseConnectionUrl: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432
   ingress:
     className: nginx
   service:
