@@ -1,22 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: yas-dev-keycloak
+  name: yas-staging-opentelemetry-collector
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "2"
+    argocd.argoproj.io/sync-wave: "5"
 spec:
-  project: yas-dev
+  project: yas-staging
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD
-    path: infrastructure/scripts/keycloak
-    helm:
-      valueFiles:
-        - ../../../../environments/dev/values-shared.yaml
+    path: infrastructure/scripts/observability/opentelemetry
   destination:
     server: https://kubernetes.default.svc
-    namespace: yas-dev
+    namespace: yas-staging
   syncPolicy:
     automated:
       prune: true

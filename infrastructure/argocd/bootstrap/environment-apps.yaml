@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-dev-apps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
+    targetRevision: HEAD
+    path: environments/dev
+    directory:
+      recurse: false
+      include: argocd-apps.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-staging-apps
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
+    targetRevision: main
+    path: environments/staging
+    directory:
+      recurse: false
+      include: argocd-apps.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

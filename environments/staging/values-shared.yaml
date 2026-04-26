@@ -28,9 +28,70 @@ keycloak:
   backofficeRedirectUrl: http://backoffice.yas.staging.com
   storefrontRedirectUrl: http://storefront.yas.staging.com
 
+applicationConfig:
+  spring:
+    security:
+      oauth2:
+        resourceserver:
+          jwt:
+            issuer-uri: http://identity.yas.staging.com/realms/Yas
+  springdoc:
+    oauthflow:
+      authorization-url: http://identity.yas.staging.com/realms/Yas/protocol/openid-connect/auth
+      token-url: http://identity.yas.staging.com/realms/Yas/protocol/openid-connect/token
+
+backofficeBffExtraConfig:
+  spring:
+    data:
+      redis:
+        host: redis-master.yas-staging.svc.cluster.local
+    security:
+      oauth2:
+        client:
+          provider:
+            keycloak:
+              issuer-uri: http://identity.yas.staging.com/realms/Yas
+
+storefrontBffExtraConfig:
+  spring:
+    data:
+      redis:
+        host: redis-master.yas-staging.svc.cluster.local
+    security:
+      oauth2:
+        client:
+          provider:
+            keycloak:
+              issuer-uri: http://identity.yas.staging.com/realms/Yas
+
+mediaApplicationConfig:
+  yas:
+    publicUrl: http://api.yas.staging.com/media
+
+customerApplicationConfig:
+  keycloak:
+    auth-server-url: http://identity.yas.staging.com
+
+searchApplicationConfig:
+  elasticsearch:
+    url: elasticsearch-es-http.yas-staging.svc.cluster.local:9200
+
+paymentPaypalApplicationConfig:
+  yas:
+    public:
+      url: http://storefront.yas.staging.com/complete-payment
+
+sampledataApplicationConfig:
+  spring:
+    datasource:
+      product:
+        url: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432/product
+      media:
+        url: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432/media
+
 backend:
   replicaCount: 1
-  databaseConnectionUrl: jdbc:postgresql://postgresql.yas-staging:5432
+  databaseConnectionUrl: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432
   ingress:
     className: nginx
   service:

@@ -7,7 +7,7 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "1"
 spec:
-  project: default
+  project: yas-staging
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD

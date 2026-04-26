@@ -4,7 +4,7 @@ metadata:
   name: yas-dev-infrastructure
   namespace: argocd
 spec:
-  project: default
+  project: yas-dev
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD
@@ -15,6 +15,32 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-dev-shared-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: yas-dev
+  source:
+    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
+    targetRevision: HEAD
+    path: charts/yas-configuration
+    helm:
+      valueFiles:
+        - ../../environments/dev/values-shared.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: yas-dev
   syncPolicy:
     automated:
       prune: true
@@ -41,13 +67,24 @@ spec:
           - service: location
           - service: inventory
           - service: search
+          # - service: payment
+          # - service: payment-paypal
+          - service: promotion
+          - service: recommendation
+          - service: sampledata
+          - service: webhook
+          - service: storefront-bff
+          - service: storefront-ui
+          - service: backoffice-bff
+          - service: backoffice-ui
+          - service: swagger-ui
   template:
     metadata:
       name: yas-dev-{{service}}
       labels:
         app.kubernetes.io/part-of: yas-dev
     spec:
-      project: default
+      project: yas-dev
       source:
         repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
         targetRevision: HEAD

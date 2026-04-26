@@ -4,14 +4,40 @@ metadata:
   name: yas-staging-infrastructure
   namespace: argocd
 spec:
-  project: default
+  project: yas-staging
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
-    targetRevision: HEAD
+    targetRevision: main
     path: environments/staging/infra-apps
     directory:
       recurse: false
       include: "*.yaml"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: yas-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-staging-shared-config
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  project: yas-staging
+  source:
+    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
+    targetRevision: main
+    path: charts/yas-configuration
+    helm:
+      valueFiles:
+        - ../../environments/staging/values-shared.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: yas-staging
@@ -41,16 +67,27 @@ spec:
           - service: location
           - service: inventory
           - service: search
+          # - service: payment
+          # - service: payment-paypal
+          - service: promotion
+          - service: recommendation
+          - service: sampledata
+          - service: webhook
+          - service: storefront-bff
+          - service: storefront-ui
+          - service: backoffice-bff
+          - service: backoffice-ui
+          - service: swagger-ui
   template:
     metadata:
       name: yas-staging-{{service}}
       labels:
         app.kubernetes.io/part-of: yas-staging
     spec:
-      project: default
+      project: yas-staging
       source:
         repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
-        targetRevision: HEAD
+        targetRevision: main
         path: charts/{{service}}
         helm:
           ignoreMissingValueFiles: true

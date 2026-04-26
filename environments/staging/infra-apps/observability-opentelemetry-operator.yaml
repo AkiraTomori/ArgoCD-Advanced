@@ -1,19 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: yas-staging-kafka
+  name: yas-staging-opentelemetry-operator
   namespace: argocd
   annotations:
-    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/sync-wave: "4"
 spec:
   project: yas-staging
   source:
-    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
-    targetRevision: HEAD
-    path: infrastructure/scripts/kafka/kafka-cluster
+    repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+    chart: opentelemetry-operator
+    targetRevision: 0.110.0
     helm:
-      valueFiles:
-        - ../../../../environments/staging/values-shared.yaml
+      releaseName: opentelemetry-operator
   destination:
     server: https://kubernetes.default.svc
     namespace: yas-staging

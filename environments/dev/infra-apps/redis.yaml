@@ -6,14 +6,18 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "0"
 spec:
-  project: default
+  project: yas-dev
   source:
-    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
-    targetRevision: HEAD
-    path: infrastructure/scripts/redis
+    repoURL: https://charts.bitnami.com/bitnami
+    chart: redis
+    targetRevision: 25.4.1
     helm:
-      valueFiles:
-        - ../../../../environments/dev/values-shared.yaml
+      releaseName: redis
+      values: |
+        architecture: standalone
+        auth:
+          enabled: true
+          password: redis
   destination:
     server: https://kubernetes.default.svc
     namespace: yas-dev

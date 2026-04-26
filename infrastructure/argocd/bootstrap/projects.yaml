@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: yas-dev
+  namespace: argocd
+spec:
+  description: YAS developer shared environment
+  sourceRepos:
+    - https://github.com/AkiraTomori/ArgoCD-Advanced.git
+  destinations:
+    - namespace: yas-dev
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: yas-staging
+  namespace: argocd
+spec:
+  description: YAS staging shared environment
+  sourceRepos:
+    - https://github.com/AkiraTomori/ArgoCD-Advanced.git
+  destinations:
+    - namespace: yas-staging
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: "*"
+      kind: "*"
+  namespaceResourceWhitelist:
+    - group: "*"
+      kind: "*"

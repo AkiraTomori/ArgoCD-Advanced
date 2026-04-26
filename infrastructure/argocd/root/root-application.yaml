@@ -1,25 +1,21 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: yas-dev-keycloak
+  name: yas-platform-root
   namespace: argocd
-  annotations:
-    argocd.argoproj.io/sync-wave: "2"
 spec:
-  project: yas-dev
+  project: default
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: HEAD
-    path: infrastructure/scripts/keycloak
-    helm:
-      valueFiles:
-        - ../../../../environments/dev/values-shared.yaml
+    path: infrastructure/argocd/bootstrap
+    directory:
+      recurse: false
+      include: "*.yaml"
   destination:
     server: https://kubernetes.default.svc
-    namespace: yas-dev
+    namespace: argocd
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
