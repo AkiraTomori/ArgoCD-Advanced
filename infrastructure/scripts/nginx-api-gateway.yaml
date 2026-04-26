@@ -2,7 +2,8 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nginx-api-config
-  namespace: yas
+  # Change your namespace here
+  namespace: test-minhhuy-baseline
 data:
   default.conf: |
     server {
@@ -11,48 +12,49 @@ data:
       # Kubernetes CoreDNS
       resolver 10.96.0.10 valid=10s;
 
+      # Change your domain here with your namespace.svc.cluster.local
       location /media/ {
-        set $upstream "media.yas.svc.cluster.local";
+        set $upstream "media.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /product/ {
-        set $upstream "product.yas.svc.cluster.local";
+        set $upstream "product.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /customer/ {
-        set $upstream "customer.yas.svc.cluster.local";
+        set $upstream "customer.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /cart/ {
-        set $upstream "cart.yas.svc.cluster.local";
+        set $upstream "cart.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /rating/ {
-        set $upstream "rating.yas.svc.cluster.local";
+        set $upstream "rating.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /order/ {
-        set $upstream "order.yas.svc.cluster.local";
+        set $upstream "order.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /location/ {
-        set $upstream "location.yas.svc.cluster.local";
+        set $upstream "location.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /inventory/ {
-        set $upstream "inventory.yas.svc.cluster.local";
+        set $upstream "inventory.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /tax/ {
-        set $upstream "tax.yas.svc.cluster.local";
+        set $upstream "tax.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /promotion/ {
-        set $upstream "promotion.yas.svc.cluster.local";
+        set $upstream "promotion.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
       location /search/ {
-        set $upstream "search.yas.svc.cluster.local";
+        set $upstream "search.test-minhhuy-baseline.svc.cluster.local";
         proxy_pass http://$upstream;
       }
     }
@@ -61,7 +63,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: nginx
-  namespace: yas
+  namespace: test-minhhuy-baseline
 spec:
   replicas: 1
   selector:
@@ -89,7 +91,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: nginx
-  namespace: yas
+  namespace: test-minhhuy-baseline
 spec:
   selector:
     app: nginx
@@ -101,11 +103,11 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: nginx-api-gateway
-  namespace: yas
+  namespace: test-minhhuy-baseline
 spec:
   ingressClassName: nginx
   rules:
-    - host: api.yas.local.com
+    - host: api.yas.test.com
       http:
         paths:
           - path: /cart
