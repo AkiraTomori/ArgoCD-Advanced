@@ -1,3 +1,5 @@
 backend:
+  ingress:
+    host: backoffice.yas.staging.com
   image:
     tag: "v0.0.4"

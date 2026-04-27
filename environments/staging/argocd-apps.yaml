@@ -68,8 +68,8 @@ spec:
         helm:
           ignoreMissingValueFiles: true
           valueFiles:
-            - ../../environments/staging/values-shared.yaml
             - ../../environments/staging/services/{{service}}.yaml
+            - ../../environments/staging/values-shared.yaml
       destination:
         server: https://kubernetes.default.svc
         namespace: yas-staging
