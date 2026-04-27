@@ -62,7 +62,7 @@ metadata:
   name: nginx
   namespace: yas-staging
 spec:
-  replicas: 1
+  replicas: 0
   selector:
     matchLabels:
       app: nginx
