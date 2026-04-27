@@ -23,6 +23,11 @@ spec:
         - |
           set -e
           echo "=== Bootstrap Media for YAS-STAGING ==="
+
+          if ! curl -fsS --connect-timeout 3 --max-time 5 http://sampledata.yas-staging.svc.cluster.local:8090/actuator/health >/dev/null 2>&1; then
+            echo "Sampledata is not ready in yas-staging; skipping media bootstrap."
+            exit 0
+          fi
           
           # Call sampledata seeding endpoint
           echo "Calling sampledata seeding endpoint..."

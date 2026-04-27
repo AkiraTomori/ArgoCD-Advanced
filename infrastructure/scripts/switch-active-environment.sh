@@ -10,6 +10,8 @@ Description:
   Switches active environment between dev and staging by updating:
   - environments/dev/values-shared.yaml
   - environments/staging/values-shared.yaml
+  - environments/dev/services/nginx-api-gateway.yaml
+  - environments/staging/services/nginx-api-gateway.yaml
   Or turns both environments off by scaling all replica counts to 0.
 
 Rules:
@@ -45,6 +47,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DEV_FILE="$REPO_ROOT/environments/dev/values-shared.yaml"
 STAGING_FILE="$REPO_ROOT/environments/staging/values-shared.yaml"
+DEV_NGINX_FILE="$REPO_ROOT/environments/dev/services/nginx-api-gateway.yaml"
+STAGING_NGINX_FILE="$REPO_ROOT/environments/staging/services/nginx-api-gateway.yaml"
 
 set_replicas() {
   local file="$1"
@@ -56,24 +60,39 @@ set_replicas() {
   yq -i ".reloader.reloader.deployment.replicas = $value" "$file"
 }
 
+set_nginx_replicas() {
+  local file="$1"
+  local value="$2"
+
+  sed -i -E "0,/^  replicas: [0-9]+$/s//  replicas: ${value}/" "$file"
+}
+
 if [[ "$TARGET_ENV" == "dev" ]]; then
   set_replicas "$DEV_FILE" 1
   set_replicas "$STAGING_FILE" 0
+  set_nginx_replicas "$DEV_NGINX_FILE" 1
+  set_nginx_replicas "$STAGING_NGINX_FILE" 0
 elif [[ "$TARGET_ENV" == "staging" ]]; then
   set_replicas "$DEV_FILE" 0
   set_replicas "$STAGING_FILE" 1
+  set_nginx_replicas "$DEV_NGINX_FILE" 0
+  set_nginx_replicas "$STAGING_NGINX_FILE" 1
 else
   set_replicas "$DEV_FILE" 0
   set_replicas "$STAGING_FILE" 0
+  set_nginx_replicas "$DEV_NGINX_FILE" 0
+  set_nginx_replicas "$STAGING_NGINX_FILE" 0
 fi
 
 echo "Switched active environment to '$TARGET_ENV'."
 echo "Updated files:"
 echo "  - $DEV_FILE"
 echo "  - $STAGING_FILE"
+echo "  - $DEV_NGINX_FILE"
+echo "  - $STAGING_NGINX_FILE"
 
 echo
 echo "Next steps:"
-echo "  1) Review: git diff environments/dev/values-shared.yaml environments/staging/values-shared.yaml"
+echo "  1) Review: git diff environments/dev/values-shared.yaml environments/staging/values-shared.yaml environments/dev/services/nginx-api-gateway.yaml environments/staging/services/nginx-api-gateway.yaml"
 echo "  2) Commit + push"
 echo "  3) Sync ArgoCD apps (yas-dev-apps and yas-staging-apps)"
