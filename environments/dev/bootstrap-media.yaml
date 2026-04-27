@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bootstrap-media
+  namespace: yas-dev
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+spec:
+  backoffLimit: 3
+  template:
+    metadata:
+      name: bootstrap-media
+    spec:
+      serviceAccountName: bootstrap-media
+      restartPolicy: Never
+      containers:
+      - name: bootstrap
+        image: curlimages/curl:latest
+        command:
+        - /bin/sh
+        - -c
+        - |
+          set -e
+          echo "=== Bootstrap Media for YAS-DEV ==="
+          
+          # Call sampledata seeding endpoint
+          echo "Calling sampledata seeding endpoint..."
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            RESPONSE=$(curl -s -X POST http://sampledata.yas-dev.svc.cluster.local/sampledata/storefront/sampledata \
+              -H "Content-Type: application/json" \
+              -d '{}' \
+              -w "\n%{http_code}")
+            
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+            BODY=$(echo "$RESPONSE" | head -n-1)
+            
+            echo "Response Code: $HTTP_CODE"
+            echo "Response Body: $BODY"
+            
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+              echo "✓ Sample data seeded successfully"
+              break
+            fi
+            
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+              echo "Retry $RETRY_COUNT/$MAX_RETRIES in 10 seconds..."
+              sleep 10
+            fi
+          done
+          
+          if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+            echo "WARNING: Could not seed sample data from sampledata endpoint"
+          fi
+          
+          echo "=== Bootstrap Complete ==="
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bootstrap-media
+  namespace: yas-dev
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bootstrap-media
+rules:
+- apiGroups: ["apps"]
+  resources: ["deployments", "deployments/rollback"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "pods/exec", "pods/log"]
+  verbs: ["get", "list", "watch", "create"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: bootstrap-media
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: bootstrap-media
+subjects:
+- kind: ServiceAccount
+  name: bootstrap-media
+  namespace: yas-dev

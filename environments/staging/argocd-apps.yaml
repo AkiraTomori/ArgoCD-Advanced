@@ -102,3 +102,28 @@ spec:
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: yas-staging-bootstrap-media
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "5"
+spec:
+  project: yas-staging
+  source:
+    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
+    targetRevision: main
+    path: environments/staging
+    directory:
+      include: 'bootstrap-media.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: yas-staging
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
