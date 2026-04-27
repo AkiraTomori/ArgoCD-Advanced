@@ -9,7 +9,7 @@ replicas:
   elasticsearch: 1
 
 postgresql:
-  host: postgresql.yas-staging
+  host: postgresql.postgres
   username: yasadminuser
   password: admin
 
@@ -44,7 +44,7 @@ backofficeBffExtraConfig:
   spring:
     data:
       redis:
-        host: redis-master.yas-staging.svc.cluster.local
+        host: redis-master.redis.svc.cluster.local
     security:
       oauth2:
         client:
@@ -56,7 +56,7 @@ storefrontBffExtraConfig:
   spring:
     data:
       redis:
-        host: redis-master.yas-staging.svc.cluster.local
+        host: redis-master.redis.svc.cluster.local
     security:
       oauth2:
         client:
@@ -74,7 +74,7 @@ customerApplicationConfig:
 
 searchApplicationConfig:
   elasticsearch:
-    url: elasticsearch-es-http.yas-staging.svc.cluster.local:9200
+    url: elasticsearch-es-http.elasticsearch.svc.cluster.local:9200
 
 paymentPaypalApplicationConfig:
   yas:
@@ -85,13 +85,13 @@ sampledataApplicationConfig:
   spring:
     datasource:
       product:
-        url: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432/product
+        url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/product
       media:
-        url: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432/media
+        url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/media
 
 backend:
   replicaCount: 1
-  databaseConnectionUrl: jdbc:postgresql://postgresql.yas-staging.svc.cluster.local:5432
+  databaseConnectionUrl: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432
   ingress:
     className: nginx
   service:
