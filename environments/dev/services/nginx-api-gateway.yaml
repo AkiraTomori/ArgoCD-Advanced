@@ -1,0 +1,179 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-api-config
+  namespace: yas-dev
+data:
+  default.conf: |
+    server {
+      listen 80;
+
+      resolver 10.96.0.10 valid=10s;
+
+      location /media/ {
+        set $upstream "media.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /product/ {
+        set $upstream "product.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /customer/ {
+        set $upstream "customer.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /cart/ {
+        set $upstream "cart.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /rating/ {
+        set $upstream "rating.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /order/ {
+        set $upstream "order.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /location/ {
+        set $upstream "location.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /inventory/ {
+        set $upstream "inventory.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /tax/ {
+        set $upstream "tax.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /promotion/ {
+        set $upstream "promotion.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+      location /search/ {
+        set $upstream "search.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx
+  namespace: yas-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.25-alpine
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: config
+          configMap:
+            name: nginx-api-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx
+  namespace: yas-dev
+spec:
+  selector:
+    app: nginx
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-api-gateway
+  namespace: yas-dev
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.yas.dev.com
+      http:
+        paths:
+          - path: /cart
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /customer
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /media
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /product
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /rating
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /order
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /location
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /inventory
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /tax
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /search
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80

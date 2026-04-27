@@ -527,6 +527,8 @@ spec:
         secret: TVacLC0cQ8tiiEKiTVerTb2YvwQ1TRJF
         redirectUris:
           - {{ .Values.backofficeRedirectUrl }}/*
+          - http://backoffice.yas.dev.com/*
+          - http://backoffice.yas.staging.com/*
           - http://localhost:3000/*
           - http://localhost:8087/*
         webOrigins: [ ]
@@ -821,6 +823,8 @@ spec:
         secret: ZrU9I0q2uXBglBnmvyJdkl1lf0ncr8tn
         redirectUris:
           - {{ .Values.storefrontRedirectUrl }}/*
+          - http://storefront.yas.dev.com/*
+          - http://storefront.yas.staging.com/*
           - http://localhost:8087/*
         webOrigins: [ ]
         notBefore: 0
@@ -934,6 +938,8 @@ spec:
         clientAuthenticatorType: client-secret
         redirectUris:
           - http://api.yas.test.com/*
+          - http://api.yas.dev.com/*
+          - http://api.yas.staging.com/*
           - http://localhost:8080/*
           - http://localhost:8081/*
           - http://localhost:8083/*
