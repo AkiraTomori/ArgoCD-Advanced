@@ -34,21 +34,21 @@ spec:
     - list:
         elements:
           - service: cart
-          # - service: tax
-          # - service: order
+          - service: tax
+          - service: order
           - service: product
-          # - service: media
-          # - service: rating
-          # - service: customer
-          # - service: location
-          # - service: inventory
-          # - service: search
+          - service: media
+          - service: rating
+          - service: customer
+          - service: location
+          - service: inventory
+          - service: search
           # - service: payment
           # - service: payment-paypal
-          # - service: promotion
-          # - service: recommendation
+          - service: promotion
+          - service: recommendation
           - service: sampledata
-          # - service: webhook
+          - service: webhook
           - service: storefront-bff
           - service: storefront-ui
           - service: backoffice-bff

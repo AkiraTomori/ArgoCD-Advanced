@@ -78,6 +78,10 @@ sampledataApplicationConfig:
 backend:
   replicaCount: 1
   databaseConnectionUrl: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432
+  livenessProbe:
+    initialDelaySeconds: 120
+  readinessProbe:
+    initialDelaySeconds: 120
   ingress:
     className: nginx
   service:
