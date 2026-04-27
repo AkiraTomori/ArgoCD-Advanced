@@ -17,3 +17,11 @@ backend:
       mountPath: /opt/yas/sampledata
   extraApplicationConfigPaths:
     - /opt/yas/sampledata/sampledata-application.yaml
+  replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
