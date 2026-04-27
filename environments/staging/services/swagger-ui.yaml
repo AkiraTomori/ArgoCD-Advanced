@@ -1,3 +1,14 @@
 ingress:
   host: api.yas.staging.com
-urls: "[{ url: 'http://api.yas.staging.com/product/v3/api-docs', name: 'Product' },\n      { url: 'http://api.yas.staging.com/media/v3/api-docs', name: 'Media' },\n      { url: 'http://api.yas.staging.com/customer/v3/api-docs', name: 'Customer' },\n      { url: 'http://api.yas.staging.com/cart/v3/api-docs', name: 'Cart' },\n      { url: 'http://api.yas.staging.com/rating/v3/api-docs', name: 'Rating' },\n      { url: 'http://api.yas.staging.com/order/v3/api-docs', name: 'Order' },\n      { url: 'http://api.yas.staging.com/location/v3/api-docs', name: 'Location' },\n      { url: 'http://api.yas.staging.com/inventory/v3/api-docs', name: 'Inventory' },\n      { url: 'http://api.yas.staging.com/tax/v3/api-docs', name: 'Tax' },\n      { url: 'http://api.yas.staging.com/promotion/v3/api-docs', name: 'Promotion' },\n      { url: 'http://api.yas.staging.com/search/v3/api-docs', name: 'Search' }]"
+urls: >-
+  [{ url: 'http://api.yas.staging.com/product/v3/api-docs', name: 'Product' },
+    { url: 'http://api.yas.staging.com/media/v3/api-docs', name: 'Media' },
+    { url: 'http://api.yas.staging.com/customer/v3/api-docs', name: 'Customer' },
+    { url: 'http://api.yas.staging.com/cart/v3/api-docs', name: 'Cart' },
+    { url: 'http://api.yas.staging.com/rating/v3/api-docs', name: 'Rating' },
+    { url: 'http://api.yas.staging.com/order/v3/api-docs', name: 'Order' },
+    { url: 'http://api.yas.staging.com/location/v3/api-docs', name: 'Location' },
+    { url: 'http://api.yas.staging.com/inventory/v3/api-docs', name: 'Inventory' },
+    { url: 'http://api.yas.staging.com/tax/v3/api-docs', name: 'Tax' },
+    { url: 'http://api.yas.staging.com/promotion/v3/api-docs', name: 'Promotion' },
+    { url: 'http://api.yas.staging.com/search/v3/api-docs', name: 'Search' }]
