@@ -1,30 +1,6 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: yas-staging-infrastructure
-  namespace: argocd
-spec:
-  project: yas-staging
-  source:
-    repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
-    targetRevision: main
-    path: environments/staging/infra-apps
-    directory:
-      recurse: false
-      include: "*.yaml"
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: yas-staging
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
----
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
   name: yas-staging-shared-config
   namespace: argocd
   annotations:
