@@ -109,3 +109,8 @@ ui:
   replicaCount: 0
 
 replicaCount: 0
+
+reloader:
+  reloader:
+    deployment:
+      replicas: 0
