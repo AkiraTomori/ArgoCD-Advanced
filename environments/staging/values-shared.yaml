@@ -1,25 +1,20 @@
 global:
   environment: staging
   domain: yas.staging.com
-
 replicas:
   postgresql: 1
   kafka: 1
   zookeeper: 1
   elasticsearch: 1
-
 postgresql:
   host: postgresql.postgres
   username: yasadminuser
   password: admin
-
 elasticsearch:
   username: yas
   password: LarUmB3A49NTg9YmgW4=
-
 redis:
   password: redis
-
 keycloak:
   bootstrapAdmin:
     username: admin
@@ -27,7 +22,6 @@ keycloak:
   hostname: identity.yas.staging.com
   backofficeRedirectUrl: http://backoffice.yas.staging.com
   storefrontRedirectUrl: http://storefront.yas.staging.com
-
 applicationConfig:
   spring:
     security:
@@ -39,7 +33,6 @@ applicationConfig:
     oauthflow:
       authorization-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/auth
       token-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/token
-
 backofficeBffExtraConfig:
   spring:
     data:
@@ -51,7 +44,6 @@ backofficeBffExtraConfig:
           provider:
             keycloak:
               issuer-uri: http://identity.yas.test.com/realms/Yas
-
 storefrontBffExtraConfig:
   spring:
     data:
@@ -63,24 +55,19 @@ storefrontBffExtraConfig:
           provider:
             keycloak:
               issuer-uri: http://identity.yas.test.com/realms/Yas
-
 mediaApplicationConfig:
   yas:
     publicUrl: http://api.yas.staging.com/media
-
 customerApplicationConfig:
   keycloak:
     auth-server-url: http://identity.yas.test.com
-
 searchApplicationConfig:
   elasticsearch:
     url: elasticsearch-es-http.elasticsearch.svc.cluster.local:9200
-
 paymentPaypalApplicationConfig:
   yas:
     public:
       url: http://storefront.yas.staging.com/complete-payment
-
 sampledataApplicationConfig:
   spring:
     datasource:
@@ -88,7 +75,6 @@ sampledataApplicationConfig:
         url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/product
       media:
         url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/media
-
 backend:
   replicaCount: 0
   databaseConnectionUrl: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432
@@ -104,12 +90,9 @@ backend:
     limits:
       cpu: "500m"
       memory: "512Mi"
-
 ui:
   replicaCount: 0
-
 replicaCount: 0
-
 reloader:
   reloader:
     deployment:
