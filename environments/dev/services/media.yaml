@@ -1,9 +1,3 @@
 backend:
-  extraVolumes:
-    - name: media-images
-      emptyDir: {}
-  extraVolumeMounts:
-    - name: media-images
-      mountPath: /images
   image:
     tag: "e4e4674d"
