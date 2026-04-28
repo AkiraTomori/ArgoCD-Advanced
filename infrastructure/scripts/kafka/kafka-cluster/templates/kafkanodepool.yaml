@@ -9,6 +9,12 @@ spec:
   roles:
     - controller
     - broker
+  template:
+    pod:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
   storage:
     type: jbod
     volumes:
