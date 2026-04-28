@@ -13,7 +13,7 @@ test:
 storage:
   type: 'filesystem'
 minio:
-  enabled: true
+  enabled: false
 
 monitoring:
   selfMonitoring:

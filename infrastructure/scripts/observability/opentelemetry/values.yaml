@@ -1,4 +1,10 @@
-opentelemetryCollectorConfig:
+image:
+  repository: otel/opentelemetry-collector-k8s
+  tag: latest
+
+mode: deployment
+
+config:
   receivers:
     otlp:
       protocols:
@@ -6,13 +12,10 @@ opentelemetryCollectorConfig:
           endpoint: 0.0.0.0:4317
         http:
           endpoint: 0.0.0.0:4318
-    loki:
-      protocols:
-        http:
-          endpoint: 0.0.0.0:3500
-      use_incoming_timestamp: true
   processors:
     batch:
+      send_batch_size: 1024
+      timeout: 10s
     attributes:
       actions:
         - action: insert
@@ -23,19 +26,21 @@ opentelemetryCollectorConfig:
           value: raw
 
   exporters:
-    logging:
+    debug:
       verbosity: detailed
-    loki:
-      endpoint: http://loki-gateway/loki/api/v1/push
     otlphttp:
       endpoint: http://tempo:4318
   service:
     pipelines:
       logs:
-        receivers: [loki]
+        receivers: [otlp]
         processors: [attributes]
-        exporters: [loki]
+        exporters: [debug]
       traces:
         receivers: [otlp]
         processors: [batch]
         exporters: [otlphttp]
+      metrics:
+        receivers: [otlp]
+        processors: [batch]
+        exporters: [debug]
