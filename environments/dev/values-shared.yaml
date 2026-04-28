@@ -28,11 +28,11 @@ applicationConfig:
       oauth2:
         resourceserver:
           jwt:
-            issuer-uri: http://identity.yas.test.com/realms/Yas
+            issuer-uri: http://identity.yas.dev.com/realms/Yas
   springdoc:
     oauthflow:
-      authorization-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/auth
-      token-url: http://identity.yas.test.com/realms/Yas/protocol/openid-connect/token
+      authorization-url: http://identity.yas.dev.com/realms/Yas/protocol/openid-connect/auth
+      token-url: http://identity.yas.dev.com/realms/Yas/protocol/openid-connect/token
 backofficeBffExtraConfig:
   spring:
     data:
@@ -43,7 +43,7 @@ backofficeBffExtraConfig:
         client:
           provider:
             keycloak:
-              issuer-uri: http://identity.yas.test.com/realms/Yas
+              issuer-uri: http://identity.yas.dev.com/realms/Yas
 storefrontBffExtraConfig:
   spring:
     data:
@@ -54,13 +54,13 @@ storefrontBffExtraConfig:
         client:
           provider:
             keycloak:
-              issuer-uri: http://identity.yas.test.com/realms/Yas
+              issuer-uri: http://identity.yas.dev.com/realms/Yas
 mediaApplicationConfig:
   yas:
     publicUrl: http://api.yas.dev.com/media
 customerApplicationConfig:
   keycloak:
-    auth-server-url: http://identity.yas.test.com
+    auth-server-url: http://identity.yas.dev.com
 searchApplicationConfig:
   elasticsearch:
     url: elasticsearch-es-http.elasticsearch.svc.cluster.local:9200
