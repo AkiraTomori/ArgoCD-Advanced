@@ -97,6 +97,14 @@ lifecycle:
 
 terminationGracePeriodSeconds: 45
 
+startupProbe:
+  periodSeconds: 10
+  failureThreshold: 30
+  successThreshold: 1
+  httpGet:
+    path: /actuator/health/readiness
+    port: metric
+
 livenessProbe:
   periodSeconds: 10
   failureThreshold: 12
