@@ -108,7 +108,10 @@ heal_kafka_if_needed() {
     return 0
   fi
 
-  if wait_pod_ready "$KAFKA_NS" "$KAFKA_POD"; then
+  local health_summary
+  health_summary="$(pod_health_summary "$KAFKA_NS" "$KAFKA_POD")"
+
+  if printf '%s' "$health_summary" | grep -q 'Running true'; then
     log "Kafka pod is Ready"
     return 0
   fi
