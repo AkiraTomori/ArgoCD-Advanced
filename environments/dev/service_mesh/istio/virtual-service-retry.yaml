@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: media-retry
+  namespace: yas-dev
+spec:
+  hosts:
+    - media.yas-dev.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: media.yas-dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 2s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
