@@ -36,7 +36,9 @@ spec:
   source:
     repoURL: https://github.com/AkiraTomori/ArgoCD-Advanced.git
     targetRevision: main
-    path: environments/staging/services/nginx-api-gateway.yaml
+    path: environments/staging
+    directory:
+      include: 'services/nginx-api-gateway.yaml'
   destination:
     server: https://kubernetes.default.svc
     namespace: yas-staging
