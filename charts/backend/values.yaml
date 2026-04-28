@@ -16,7 +16,7 @@ fullnameOverride: ""
 
 # Add host aliases to pod /etc/hosts so services can resolve cluster-internal domains
 hostAliases:
-  - ip: "10.98.51.76"  # ingress-nginx-controller ClusterIP
+  - ip: "10.102.58.104"  # ingress-nginx-controller ClusterIP
     hostnames:
       - "identity.yas.test.com"
       - "backoffice.yas.test.com"
