@@ -70,10 +70,10 @@ spec:
           - service: search
           - service: payment
           # - service: payment-paypal
-          - service: promotion
-          - service: recommendation
+          # - service: promotion
+          # - service: recommendation
           - service: sampledata
-          - service: webhook
+          # - service: webhook
           - service: storefront-bff
           - service: storefront-ui
           - service: backoffice-bff
