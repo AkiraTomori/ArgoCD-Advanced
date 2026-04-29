@@ -34,6 +34,10 @@ data:
         set $upstream "order.yas-dev.svc.cluster.local";
         proxy_pass http://$upstream;
       }
+      location /payment/ {
+        set $upstream "payment.yas-dev.svc.cluster.local";
+        proxy_pass http://$upstream;
+      }
       location /location/ {
         set $upstream "location.yas-dev.svc.cluster.local";
         proxy_pass http://$upstream;
@@ -71,6 +75,7 @@ spec:
       labels:
         app: nginx
     spec:
+      serviceAccountName: nginx
       containers:
         - name: nginx
           image: nginx:1.25-alpine
@@ -143,6 +148,13 @@ spec:
                 port:
                   number: 80
           - path: /order
+            pathType: Prefix
+            backend:
+              service:
+                name: nginx
+                port:
+                  number: 80
+          - path: /payment
             pathType: Prefix
             backend:
               service:
