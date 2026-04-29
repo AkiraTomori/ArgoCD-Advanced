@@ -76,7 +76,7 @@ sampledataApplicationConfig:
       media:
         url: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432/media
 backend:
-  replicaCount: 1
+  replicaCount: 0
   databaseConnectionUrl: jdbc:postgresql://postgresql.postgres.svc.cluster.local:5432
   livenessProbe:
     initialDelaySeconds: 120
@@ -95,9 +95,9 @@ backend:
       cpu: "500m"
       memory: "512Mi"
 ui:
-  replicaCount: 1
-replicaCount: 1
+  replicaCount: 0
+replicaCount: 0
 reloader:
   reloader:
     deployment:
-      replicas: 1
+      replicas: 0
