@@ -1,10 +1,32 @@
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: yas-dev-mtls-default
+  name: media-istio-mutual
   namespace: yas-dev
 spec:
-  host: "*.yas-dev.svc.cluster.local"
+  host: media.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: payment-istio-mutual
+  namespace: yas-dev
+spec:
+  host: payment.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: order-istio-mutual
+  namespace: yas-dev
+spec:
+  host: order.yas-dev.svc.cluster.local
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL

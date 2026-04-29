@@ -5,7 +5,7 @@
 - `media`, `order`, `payment` là 3 service được bảo vệ.
 - `mesh-debug` là pod/service account dùng để test deny.
 
-Kỳ vọng mặc định: `storefront-bff` và `nginx` được phép gọi vào cả 3 service; riêng `order` còn được phép nhận cuộc gọi từ `payment` và `rating` vì app hiện có các luồng nội bộ này.
+Kỳ vọng mặc định: chỉ `storefront-bff` và `nginx` được phép gọi vào cả 3 service. Các caller khác sẽ bị chặn.
 
 ## 0. Pre-check
 Goal: ensure namespace and sidecar injection are ready.
@@ -33,8 +33,6 @@ Example allow case:
 - `nginx` -> `order`
 - `storefront-bff` -> `payment`
 - `nginx` -> `payment`
-- `payment` -> `order`
-- `rating` -> `order`
 
 Expected:
 - curl returns `200` or the application response.
@@ -43,7 +41,7 @@ Expected:
 Allow matrix:
 - `media`: `storefront-bff`, `nginx`
 - `payment`: `storefront-bff`, `nginx`
-- `order`: `storefront-bff`, `nginx`, `payment`, `rating`
+- `order`: `storefront-bff`, `nginx`
 
 ## 3. AuthorizationPolicy deny test
 Goal: a non-allowed pod/service account is blocked.
@@ -79,7 +77,7 @@ Goal: capture the service mesh graph for `yas-dev`.
 
 Checks:
 - open Kiali and select namespace `yas-dev`
-- confirm topology edges for `storefront-bff -> media/order/payment` and `payment -> order`
+- confirm topology edges for `storefront-bff/nginx -> media/order/payment`
 - capture a screenshot after one successful request
 
 ## Example curl
@@ -93,13 +91,13 @@ kubectl apply -n yas-dev -f - <<'EOF'
 apiVersion: v1
 kind: Pod
 metadata:
-	name: mesh-debug
+  name: mesh-debug
 spec:
-	serviceAccountName: mesh-debug
-	containers:
-		- name: curl
-			image: curlimages/curl:8.10.1
-			command: ["sh", "-c", "sleep 3600"]
+  serviceAccountName: mesh-debug
+  containers:
+    - name: curl
+      image: curlimages/curl:8.10.1
+      command: ["sh", "-c", "sleep 3600"]
 EOF
 
 kubectl exec -n yas-dev mesh-debug -- curl -v http://media.yas-dev.svc.cluster.local/

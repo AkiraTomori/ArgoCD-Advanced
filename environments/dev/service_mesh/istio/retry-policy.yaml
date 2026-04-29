@@ -14,6 +14,46 @@ spec:
               number: 80
       retries:
         attempts: 3
-        perTryTimeout: 2s
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: payment-retry
+  namespace: yas-dev
+spec:
+  hosts:
+    - payment.yas-dev.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: payment.yas-dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,refused-stream,5xx
+      timeout: 10s
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: order-retry
+  namespace: yas-dev
+spec:
+  hosts:
+    - order.yas-dev.svc.cluster.local
+  http:
+    - route:
+        - destination:
+            host: order.yas-dev.svc.cluster.local
+            port:
+              number: 80
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
         retryOn: gateway-error,connect-failure,refused-stream,5xx
       timeout: 10s
