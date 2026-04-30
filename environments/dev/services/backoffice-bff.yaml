@@ -2,4 +2,4 @@ backend:
   ingress:
     host: backoffice.yas.dev.com
   image:
-    tag: 07a0b839
+    tag: 5c072eb5
