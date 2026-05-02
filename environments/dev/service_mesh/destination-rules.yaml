@@ -30,3 +30,15 @@ spec:
   trafficPolicy:
     tls:
       mode: ISTIO_MUTUAL
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: mesh-retry-probe
+  namespace: yas-dev
+spec:
+  host: mesh-retry-probe.yas-dev.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL

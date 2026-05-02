@@ -14,21 +14,24 @@ Runbook Istio cho namespace `yas-dev`.
 - Service debug để test deny: `mesh-debug`
 
 Mục tiêu của bài test là cho thấy chỉ `storefront-bff` và `nginx` mới được phép gọi vào `media`/`payment`/`order`, còn pod khác trong `yas-dev` sẽ bị chặn.
+Để Kiali hiển thị đường màu xanh, cần tạo traffic hợp lệ trả về `200` từ một path thật sự tồn tại, ví dụ `/<service>/v3/api-docs`.
 
 ## Topology mục tiêu
 ```mermaid
 flowchart LR
-	B[Browser] --> G[Nginx ingress / API gateway]
-	G --> S[storefront-bff]
-	S --> M[media]
-	S --> O[order]
-	S --> PA[payment]
-	G --> M
-	G --> O
-	G --> PA
-	M --> K[(Kiali)]
-	PA --> K
-	O --> K
+    B["Browser"] --> G["Nginx Ingress / API Gateway"]
+    G --> S["Storefront BFF"]
+    S --> M["Media Service"]
+    S --> O["Order Service"]
+    S --> PA["Payment Service"]
+    
+    G --> M
+    G --> O
+    G --> PA
+    
+    M --> K[("Kiali (Observability)")]
+    PA --> K
+    O --> K
 ```
 
 ## Kịch bản triển khai
@@ -40,6 +43,12 @@ flowchart LR
 6. Apply `VirtualService` retry/timeout cho route cần resilience.
 7. Kiểm tra topology trong Kiali rồi chụp screenshot.
 8. Chạy test allow/deny bằng `curl` từ pod trong `yas-dev`.
+
+## Deliverables
+- YAML cấu hình mesh: [mtls-peer-auth.yaml](mtls-peer-auth.yaml), [destination-rules.yaml](destination-rules.yaml), [auth-policy.yaml](auth-policy.yaml), [retry-policy.yaml](retry-policy.yaml), [ServiceAccount.yaml](ServiceAccount.yaml).
+- Ảnh Kiali topology kèm mô tả ngắn về luồng `storefront-bff/nginx -> media/payment/order`.
+- Test plan và logs minh chứng: [test_plan.sh](test_plan.sh) với kết quả `200`, `403`, `500` và retry evidence.
+- Hướng dẫn triển khai nhanh: làm theo các bước trong file này hoặc chạy [test-plan.md](test-plan.md) để xem bản rút gọn.
 
 ## Apply manifests
 ```bash
@@ -125,19 +134,6 @@ Kỳ vọng:
 - caller `storefront-bff` và `nginx` được phép truy cập 3 service đích
 - caller `mesh-debug` bị từ chối bởi AuthorizationPolicy (thường 403 hoặc RBAC denied)
 - do `VirtualService` retry chỉ gắn cho `media`, case retry evidence tập trung vào `media`
-
-## Kiali
-- Mở Kiali và chọn namespace `yas-dev`.
-- Xác nhận các pod đã có sidecar Envoy.
-- Quan sát các edge giữa `storefront-bff/nginx -> media/payment/order`.
-- Dùng topology này làm ảnh minh chứng cho bài thực hành.
-
-## Ghi chú file
-- `istio/mtls-peer-auth.yaml`: mTLS namespace-wide
-- `istio/destination-rules.yaml`: TLS nội bộ mesh
-- `istio/auth-policy.yaml`: allow-list theo service account
-- `istio/retry-policy.yaml`: retry/timeout cho `media`
-- `istio/namespace-label.md`: lệnh bật sidecar injection
 
 ## Lưu ý
 - Tất cả manifest đều scope vào `yas-dev`.

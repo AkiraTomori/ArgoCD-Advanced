@@ -8,6 +8,7 @@
 
 set -e
 NAMESPACE="${NAMESPACE:-yas-dev}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 get_pod() {
   local label_selector="$1"
@@ -28,24 +29,29 @@ get_backend_pod() {
   echo "$pod_name"
 }
 
+get_sidecar_pod() {
+  local pod_name
+
+  for app_name in nginx storefront-bff media payment order; do
+    pod_name=$(get_backend_pod "$app_name")
+    if [[ -n "$pod_name" ]]; then
+      echo "$pod_name"
+      return 0
+    fi
+  done
+
+  echo ""
+}
+
 create_curl_pod() {
-  local pod_name="$1"
-  local service_account="$2"
+  local pod_name="$1" service_account="$2"
 
   kubectl delete pod -n "$NAMESPACE" "$pod_name" --ignore-not-found >/dev/null 2>&1 || true
-  kubectl apply -n "$NAMESPACE" -f - >/dev/null <<EOF
-apiVersion: v1
-kind: Pod
-metadata:
-  name: ${pod_name}
-spec:
-  serviceAccountName: ${service_account}
-  restartPolicy: Never
-  containers:
-    - name: curl
-      image: curlimages/curl:8.10.1
-      command: ["sh", "-c", "sleep 3600"]
-EOF
+  kubectl run -n "$NAMESPACE" "$pod_name" \
+    --image=curlimages/curl:8.10.1 \
+    --restart=Never \
+    --serviceaccount="$service_account" \
+    --command -- sh -c 'sleep 3600' >/dev/null
   kubectl wait -n "$NAMESPACE" --for=condition=Ready pod/"$pod_name" --timeout=120s >/dev/null
 }
 
@@ -61,83 +67,7 @@ create_retry_probe() {
   kubectl delete virtualservice -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
   kubectl delete destinationrule -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
 
-  kubectl apply -n "$NAMESPACE" -f - >/dev/null <<'EOF'
-apiVersion: v1
-kind: Pod
-metadata:
-  name: mesh-retry-probe
-  labels:
-    app: mesh-retry-probe
-  annotations:
-    sidecar.istio.io/inject: "true"
-spec:
-  restartPolicy: Never
-  containers:
-    - name: probe
-      image: python:3.11-alpine
-      ports:
-        - containerPort: 8080
-      command:
-        - python
-        - -u
-        - -c
-        - |
-          from http.server import BaseHTTPRequestHandler, HTTPServer
-
-          class Handler(BaseHTTPRequestHandler):
-              def do_GET(self):
-                  print(f"REQUEST {self.path}", flush=True)
-                  self.send_response(500)
-                  self.send_header("Content-Type", "text/plain")
-                  self.end_headers()
-                  self.wfile.write(b"upstream failure")
-
-              def log_message(self, format, *args):
-                  return
-
-          HTTPServer(("0.0.0.0", 8080), Handler).serve_forever()
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: mesh-retry-probe
-spec:
-  selector:
-    app: mesh-retry-probe
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
----
-apiVersion: networking.istio.io/v1beta1
-kind: DestinationRule
-metadata:
-  name: mesh-retry-probe
-spec:
-  host: mesh-retry-probe.yas-dev.svc.cluster.local
-  trafficPolicy:
-    tls:
-      mode: ISTIO_MUTUAL
----
-apiVersion: networking.istio.io/v1beta1
-kind: VirtualService
-metadata:
-  name: mesh-retry-probe
-spec:
-  hosts:
-    - mesh-retry-probe.yas-dev.svc.cluster.local
-  http:
-    - route:
-        - destination:
-            host: mesh-retry-probe.yas-dev.svc.cluster.local
-            port:
-              number: 80
-      retries:
-        attempts: 3
-        perTryTimeout: 2s
-        retryOn: gateway-error,connect-failure,refused-stream,5xx
-      timeout: 8s
-EOF
+  kubectl apply -n "$NAMESPACE" -f "$SCRIPT_DIR/ServiceAccount.yaml" -f "$SCRIPT_DIR/destination-rules.yaml" -f "$SCRIPT_DIR/retry-policy.yaml" >/dev/null
 
   kubectl wait -n "$NAMESPACE" --for=condition=Ready pod/mesh-retry-probe --timeout=120s >/dev/null
 }
@@ -154,6 +84,26 @@ http_status_from_pod() {
   local url="$2"
 
   kubectl exec -n "$NAMESPACE" "$pod_name" -- curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$url" 2>/dev/null || true
+}
+
+# Generic check helper: pod, url, short-description
+run_check() {
+  local pod="$1" url="$2" desc="$3"
+  echo "--- ${desc} ---"
+  echo "Pod: ${pod} -> ${url}"
+  local STATUS
+  STATUS=$(http_status_from_pod "$pod" "$url")
+  echo "HTTP Status: ${STATUS:-failed}"
+  if [[ "$STATUS" == "403" ]]; then
+    echo "RESULT: DENIED (403)"
+  elif [[ "$STATUS" == "200" ]]; then
+    echo "RESULT: ALLOWED (200) - green evidence"
+  elif [[ "$STATUS" == "500" ]]; then
+    echo "RESULT: SERVER ERROR (500)"
+  else
+    echo "RESULT: reached (status ${STATUS:-unknown}) - NOTE: 404 ignored"
+  fi
+  echo ""
 }
 
 echo "=============================================="
@@ -176,12 +126,12 @@ kubectl get pods -n $NAMESPACE -o custom-columns="NAME:.metadata.name,READY:.sta
 echo ""
 
 echo "--- 1c. Kiểm tra Envoy TLS stats ---"
-PRODUCT_POD=$(get_backend_pod product)
-if [[ -n "$PRODUCT_POD" ]]; then
-  echo "Pod: $PRODUCT_POD"
-  kubectl exec -n $NAMESPACE $PRODUCT_POD -c istio-proxy -- pilot-agent request GET stats 2>/dev/null | grep "ssl" | head -10 || true
+SIDECAR_POD=$(get_sidecar_pod)
+if [[ -n "$SIDECAR_POD" ]]; then
+  echo "Pod: $SIDECAR_POD"
+  kubectl exec -n $NAMESPACE $SIDECAR_POD -c istio-proxy -- pilot-agent request GET stats 2>/dev/null | grep "ssl" | head -10 || true
 else
-  echo "No product pod found"
+  echo "No sidecar pod found"
 fi
 echo ""
 
@@ -192,15 +142,14 @@ echo ""
 echo ">>> TEST 2: Authorization Policy"
 
 ORDER_POD=$(get_backend_pod order)
-PRODUCT_POD=$(get_backend_pod product)
 NGINX_POD=$(get_pod "app=nginx")
 MEDIA_POD=$(get_backend_pod media)
 PAYMENT_POD=$(get_backend_pod payment)
 TAX_POD=$(get_backend_pod tax)
 
-if [[ -z "$ORDER_POD" || -z "$PRODUCT_POD" || -z "$NGINX_POD" || -z "$MEDIA_POD" || -z "$PAYMENT_POD" || -z "$TAX_POD" ]]; then
+if [[ -z "$ORDER_POD" || -z "$NGINX_POD" || -z "$MEDIA_POD" || -z "$PAYMENT_POD" || -z "$TAX_POD" ]]; then
   echo "One or more required pods were not found."
-  echo "order=$ORDER_POD product=$PRODUCT_POD nginx=$NGINX_POD media=$MEDIA_POD payment=$PAYMENT_POD tax=$TAX_POD"
+  echo "order=$ORDER_POD nginx=$NGINX_POD media=$MEDIA_POD payment=$PAYMENT_POD tax=$TAX_POD"
   exit 1
 fi
 
@@ -211,71 +160,11 @@ create_curl_pod mesh-test-product product
 create_curl_pod mesh-test-nginx nginx
 create_curl_pod mesh-test-tax tax
 
-echo ""
-echo "--- 2a. nginx -> media (SHOULD BE ALLOWED) ---"
-echo "Pod: mesh-test-nginx (sa: nginx) -> media:80"
-STATUS=$(http_status_from_pod mesh-test-nginx http://media:80/)
-echo "HTTP Status: ${STATUS:-failed}"
-if [[ "$STATUS" == "403" ]]; then
-  echo "RESULT: DENIED (403)"
-elif [[ "$STATUS" == "500" ]]; then
-  echo "RESULT: SERVER ERROR (500)"
-else
-  echo "RESULT: reached (status ${STATUS:-unknown}) - OK for policy check (404 ignored)"
-fi
-echo ""
-
-echo "--- 2b. nginx -> payment (SHOULD BE ALLOWED) ---"
-echo "Pod: mesh-test-nginx (sa: nginx) -> payment:80"
-STATUS=$(http_status_from_pod mesh-test-nginx http://payment:80/)
-echo "HTTP Status: ${STATUS:-failed}"
-if [[ "$STATUS" == "403" ]]; then
-  echo "RESULT: DENIED (403)"
-elif [[ "$STATUS" == "500" ]]; then
-  echo "RESULT: SERVER ERROR (500)"
-else
-  echo "RESULT: reached (status ${STATUS:-unknown}) - OK for policy check (404 ignored)"
-fi
-echo ""
-
-echo "--- 2c. tax -> media (SHOULD BE DENIED - 403) ---"
-echo "Pod: mesh-test-tax (sa: tax) -> media:80"
-STATUS=$(http_status_from_pod mesh-test-tax http://media:80/)
-echo "HTTP Status: ${STATUS:-failed}"
-if [[ "$STATUS" == "403" ]]; then
-  echo "RESULT: DENIED (403) - expected"
-elif [[ "$STATUS" == "500" ]]; then
-  echo "RESULT: SERVER ERROR (500)"
-else
-  echo "RESULT: reached (status ${STATUS:-unknown}) - NOTE: 404 is ignored"
-fi
-echo ""
-
-echo "--- 2d. product -> payment (SHOULD BE DENIED - 403) ---"
-echo "Pod: mesh-test-product (sa: product) -> payment:80"
-STATUS=$(http_status_from_pod mesh-test-product http://payment:80/)
-echo "HTTP Status: ${STATUS:-failed}"
-if [[ "$STATUS" == "403" ]]; then
-  echo "RESULT: DENIED (403) - expected"
-elif [[ "$STATUS" == "500" ]]; then
-  echo "RESULT: SERVER ERROR (500)"
-else
-  echo "RESULT: reached (status ${STATUS:-unknown}) - NOTE: 404 is ignored"
-fi
-echo ""
-
-echo "--- 2e. order -> payment (SHOULD BE DENIED - 403) ---"
-echo "Pod: mesh-test-order (sa: order) -> payment:80"
-STATUS=$(http_status_from_pod mesh-test-order http://payment:80/)
-echo "HTTP Status: ${STATUS:-failed}"
-if [[ "$STATUS" == "403" ]]; then
-  echo "RESULT: DENIED (403) - expected"
-elif [[ "$STATUS" == "500" ]]; then
-  echo "RESULT: SERVER ERROR (500)"
-else
-  echo "RESULT: reached (status ${STATUS:-unknown}) - NOTE: 404 is ignored"
-fi
-echo ""
+run_check mesh-test-nginx http://media:80/media/v3/api-docs "2a. nginx -> media (SHOULD BE ALLOWED)"
+run_check mesh-test-nginx http://payment:80/payment/v3/api-docs "2b. nginx -> payment (SHOULD BE ALLOWED)"
+run_check mesh-test-tax http://media:80/ "2c. tax -> media (SHOULD BE DENIED - 403)"
+run_check mesh-test-product http://payment:80/ "2d. product -> payment (SHOULD BE DENIED - 403)"
+run_check mesh-test-order http://payment:80/ "2e. order -> payment (SHOULD BE DENIED - 403)"
 
 # -----------------------------------------------
 # TEST 3: Retry Policy
@@ -288,12 +177,6 @@ echo ""
 echo "--- 3b. Kiểm tra retry config trong Envoy ---"
 if [[ -n "$NGINX_POD" ]]; then
   kubectl exec -n $NAMESPACE $NGINX_POD -c istio-proxy -- pilot-agent request GET config_dump 2>/dev/null | grep -A5 "retry_policy" | head -20 || true
-fi
-echo ""
-
-echo "--- 3c. Envoy access logs (xem retry attempts) ---"
-if [[ -n "$CART_POD" ]]; then
-  kubectl logs $CART_POD -n $NAMESPACE -c istio-proxy --tail=20 2>/dev/null || true
 fi
 echo ""
 
