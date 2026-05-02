@@ -1,0 +1,146 @@
+./test_plan.sh 
+==============================================
+  SERVICE MESH TEST PLAN - YAS PROJECT
+  Namespace: yas-dev
+  Date: Sat May  2 10:20:29 UTC 2026
+==============================================
+
+>>> TEST 1: Verify mTLS
+--- 1a. PeerAuthentication status ---
+NAME                  MODE     AGE
+yas-dev-strict-mtls   STRICT   71m
+
+--- 1b. Kiểm tra tất cả pods đều có sidecar (2/2) ---
+NAME                                 READY        CONTAINERS
+backoffice-bff-dd9d7c575-b4vxl       true,true    backoffice-bff,istio-proxy
+backoffice-ui-596c474474-g7vvr       true,true    backoffice-ui,istio-proxy
+cart-6dcc4645cd-q4kpl                true,true    cart,istio-proxy
+customer-777f94486c-6rphg            true,true    customer,istio-proxy
+inventory-696d9bcf7f-n5j6c           true,true    inventory,istio-proxy
+location-65f67bdb64-ksftk            true,true    location,istio-proxy
+media-8589675d5c-z2dqw               true,true    media,istio-proxy
+mesh-debug                           false,true   curl,istio-proxy
+mesh-retry-probe                     true,true    probe,istio-proxy
+nginx-6bb675577f-chm2j               true,true    nginx,istio-proxy
+order-c6f74ff7-jqthl                 true,true    order,istio-proxy
+payment-f68bc68bc-xjj6f              true,true    payment,istio-proxy
+product-5b7866fb55-wbftl             true,true    product,istio-proxy
+rating-5db466bcd-cqhzf               true,true    rating,istio-proxy
+sampledata-76b4549476-dqnb6          true,true    sampledata,istio-proxy
+storefront-bff-7d8c6889f9-t57hd      true,true    storefront-bff,istio-proxy
+storefront-ui-697cd48bf8-czh74       true,true    storefront-ui,istio-proxy
+tax-568566fd8-xsft5                  true,true    tax,istio-proxy
+yas-dev-swagger-ui-d659bcb9f-qvx4x   true,true    swagger-ui,istio-proxy
+yas-reloader-8669c9c847-xdppc        true,true    yas-reloader,istio-proxy
+
+--- 1c. Kiểm tra Envoy TLS stats ---
+Pod: nginx-6bb675577f-chm2j
+
+>>> TEST 2: Authorization Policy
+--- 2a. storefront-bff -> media (SHOULD BE ALLOWED) ---
+Pod: mesh-test-storefront-bff -> http://media:80/media/v3/api-docs
+HTTP Status: 200
+RESULT: ALLOWED (200) - green evidence
+
+--- 2b. storefront-bff -> payment (SHOULD BE ALLOWED) ---
+Pod: mesh-test-storefront-bff -> http://payment:80/payment/v3/api-docs
+HTTP Status: 200
+RESULT: ALLOWED (200) - green evidence
+
+--- 2c. storefront-bff -> order (SHOULD BE ALLOWED) ---
+Pod: mesh-test-storefront-bff -> http://order:80/order/v3/api-docs
+HTTP Status: 200
+RESULT: ALLOWED (200) - green evidence
+
+--- 2d. nginx -> media (SHOULD BE ALLOWED) ---
+Pod: mesh-test-nginx -> http://media:80/media/v3/api-docs
+HTTP Status: 200
+RESULT: ALLOWED (200) - green evidence
+
+--- 2e. nginx -> payment (SHOULD BE ALLOWED) ---
+Pod: mesh-test-nginx -> http://payment:80/payment/v3/api-docs
+HTTP Status: 200
+RESULT: ALLOWED (200) - green evidence
+
+--- 2f. tax -> media (SHOULD BE DENIED - 403) ---
+Pod: mesh-test-tax -> http://media:80/
+HTTP Status: 403
+RESULT: DENIED (403)
+
+--- 2g. product -> payment (SHOULD BE DENIED - 403) ---
+Pod: mesh-test-product -> http://payment:80/
+HTTP Status: 403
+RESULT: DENIED (403)
+
+--- 2h. order -> payment (SHOULD BE DENIED - 403) ---
+Pod: mesh-test-order -> http://payment:80/
+HTTP Status: 403
+RESULT: DENIED (403)
+
+>>> TEST 3: Retry Policy (VirtualService)
+--- 3a. VirtualService cấu hình ---
+NAME               GATEWAYS   HOSTS                                            AGE
+media-retry                   ["media.yas-dev.svc.cluster.local"]              68m
+mesh-retry-probe              ["mesh-retry-probe.yas-dev.svc.cluster.local"]   47m
+order-retry                   ["order.yas-dev.svc.cluster.local"]              68m
+payment-retry                 ["payment.yas-dev.svc.cluster.local"]            68m
+
+--- 3b. Kiểm tra retry config trong Envoy ---
+           "retry_policy": {
+            "retry_on": "connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes",
+            "num_retries": 2,
+            "retry_host_predicate": [
+             {
+              "name": "envoy.retry_host_predicates.previous_hosts",
+--
+           "retry_policy": {
+            "retry_on": "connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes",
+            "num_retries": 2,
+            "retry_host_predicate": [
+             {
+              "name": "envoy.retry_host_predicates.previous_hosts",
+--
+           "retry_policy": {
+            "retry_on": "connect-failure,refused-stream,unavailable,cancelled,retriable-status-codes",
+            "num_retries": 2,
+            "retry_host_predicate": [
+             {
+              "name": "envoy.retry_host_predicates.previous_hosts",
+
+>>> TEST 4: Real 500 Retry Evidence
+--- 4a. Probe pod log before request ---
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+
+--- 4b. Call probe service once from mesh-test-nginx ---
+HTTP Status: 500
+RESULT: UPSTREAM ERROR (500) - expected
+
+--- 4c. Probe pod logs after request ---
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+REQUEST /
+
+==============================================
+  TEST COMPLETED
+==============================================

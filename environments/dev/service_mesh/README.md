@@ -79,7 +79,7 @@ kubectl get ns istio-system
 kubectl get ns yas-dev --show-labels
 ```
 
-### Bước 3: Restart workload nếu vừa apply xong policy mới
+### Bước 3: Restart workload nếu vừa apply xong policy mới 
 ```bash
 kubectl rollout restart deploy/storefront-bff -n yas-dev
 kubectl rollout restart deploy/nginx -n yas-dev
@@ -91,6 +91,16 @@ kubectl rollout status deploy/nginx -n yas-dev --timeout=120s
 kubectl rollout status deploy/media -n yas-dev --timeout=120s
 kubectl rollout status deploy/payment -n yas-dev --timeout=120s
 kubectl rollout status deploy/order -n yas-dev --timeout=120s
+```
+
+Các câu lệnh trên là chỉ restart những pods cho kịch bản test, không cần restart hết
+Hoặc có thể sử dụng câu lệnh để inject sidecar hết cho các pods
+```bash
+# Restart tất cả pods để inject Envoy sidecar
+kubectl rollout restart deployment -n yas-dev
+
+# Verify: cột READY phải là 2/2 (app + sidecar)
+kubectl get pods -n yas-dev
 ```
 
 ### Bước 4: Chạy test_plan.sh để thu kết quả tổng hợp
