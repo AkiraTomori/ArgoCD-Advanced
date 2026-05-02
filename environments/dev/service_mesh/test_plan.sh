@@ -3,12 +3,10 @@
 # Service Mesh Test Plan - YAS Microservices
 # Yêu cầu: Istio đã cài, sidecar đã inject (pods 2/2), mTLS STRICT
 # Mục tiêu: kiểm tra ALLOW vs DENY (403) và retry evidence (500)
-# Ghi chú: script này IGNORE 404 (treated as 'reached but no handler')
 # ===================================================================
 
 set -e
 NAMESPACE="${NAMESPACE:-yas-dev}"
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 get_pod() {
   local label_selector="$1"
@@ -50,7 +48,7 @@ create_curl_pod() {
   kubectl run -n "$NAMESPACE" "$pod_name" \
     --image=curlimages/curl:8.10.1 \
     --restart=Never \
-    --serviceaccount="$service_account" \
+    --overrides="{\"apiVersion\":\"v1\",\"spec\":{\"serviceAccountName\":\"$service_account\"}}" \
     --command -- sh -c 'sleep 3600' >/dev/null
   kubectl wait -n "$NAMESPACE" --for=condition=Ready pod/"$pod_name" --timeout=120s >/dev/null
 }
@@ -61,22 +59,8 @@ cleanup_curl_pod() {
   kubectl delete pod -n "$NAMESPACE" "$pod_name" --ignore-not-found >/dev/null 2>&1 || true
 }
 
-create_retry_probe() {
-  kubectl delete pod -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete svc -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete virtualservice -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete destinationrule -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-
-  kubectl apply -n "$NAMESPACE" -f "$SCRIPT_DIR/ServiceAccount.yaml" -f "$SCRIPT_DIR/destination-rules.yaml" -f "$SCRIPT_DIR/retry-policy.yaml" >/dev/null
-
+wait_for_retry_probe() {
   kubectl wait -n "$NAMESPACE" --for=condition=Ready pod/mesh-retry-probe --timeout=120s >/dev/null
-}
-
-cleanup_retry_probe() {
-  kubectl delete virtualservice -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete destinationrule -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete svc -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
-  kubectl delete pod -n "$NAMESPACE" mesh-retry-probe --ignore-not-found >/dev/null 2>&1 || true
 }
 
 http_status_from_pod() {
@@ -142,29 +126,34 @@ echo ""
 echo ">>> TEST 2: Authorization Policy"
 
 ORDER_POD=$(get_backend_pod order)
+STOREFRONT_BFF_POD=$(get_backend_pod storefront-bff)
 NGINX_POD=$(get_pod "app=nginx")
 MEDIA_POD=$(get_backend_pod media)
 PAYMENT_POD=$(get_backend_pod payment)
 TAX_POD=$(get_backend_pod tax)
 
-if [[ -z "$ORDER_POD" || -z "$NGINX_POD" || -z "$MEDIA_POD" || -z "$PAYMENT_POD" || -z "$TAX_POD" ]]; then
+if [[ -z "$ORDER_POD" || -z "$STOREFRONT_BFF_POD" || -z "$NGINX_POD" || -z "$MEDIA_POD" || -z "$PAYMENT_POD" || -z "$TAX_POD" ]]; then
   echo "One or more required pods were not found."
-  echo "order=$ORDER_POD nginx=$NGINX_POD media=$MEDIA_POD payment=$PAYMENT_POD tax=$TAX_POD"
+  echo "order=$ORDER_POD storefront-bff=$STOREFRONT_BFF_POD nginx=$NGINX_POD media=$MEDIA_POD payment=$PAYMENT_POD tax=$TAX_POD"
   exit 1
 fi
 
-trap 'cleanup_curl_pod mesh-test-order; cleanup_curl_pod mesh-test-product; cleanup_curl_pod mesh-test-nginx; cleanup_curl_pod mesh-test-tax; cleanup_retry_probe' EXIT
+trap 'cleanup_curl_pod mesh-test-order; cleanup_curl_pod mesh-test-product; cleanup_curl_pod mesh-test-storefront-bff; cleanup_curl_pod mesh-test-nginx; cleanup_curl_pod mesh-test-tax' EXIT
 
 create_curl_pod mesh-test-order order
 create_curl_pod mesh-test-product product
+create_curl_pod mesh-test-storefront-bff storefront-bff
 create_curl_pod mesh-test-nginx nginx
 create_curl_pod mesh-test-tax tax
 
-run_check mesh-test-nginx http://media:80/media/v3/api-docs "2a. nginx -> media (SHOULD BE ALLOWED)"
-run_check mesh-test-nginx http://payment:80/payment/v3/api-docs "2b. nginx -> payment (SHOULD BE ALLOWED)"
-run_check mesh-test-tax http://media:80/ "2c. tax -> media (SHOULD BE DENIED - 403)"
-run_check mesh-test-product http://payment:80/ "2d. product -> payment (SHOULD BE DENIED - 403)"
-run_check mesh-test-order http://payment:80/ "2e. order -> payment (SHOULD BE DENIED - 403)"
+run_check mesh-test-storefront-bff http://media:80/media/v3/api-docs "2a. storefront-bff -> media (SHOULD BE ALLOWED)"
+run_check mesh-test-storefront-bff http://payment:80/payment/v3/api-docs "2b. storefront-bff -> payment (SHOULD BE ALLOWED)"
+run_check mesh-test-storefront-bff http://order:80/order/v3/api-docs "2c. storefront-bff -> order (SHOULD BE ALLOWED)"
+run_check mesh-test-nginx http://media:80/media/v3/api-docs "2d. nginx -> media (SHOULD BE ALLOWED)"
+run_check mesh-test-nginx http://payment:80/payment/v3/api-docs "2e. nginx -> payment (SHOULD BE ALLOWED)"
+run_check mesh-test-tax http://media:80/ "2f. tax -> media (SHOULD BE DENIED - 403)"
+run_check mesh-test-product http://payment:80/ "2g. product -> payment (SHOULD BE DENIED - 403)"
+run_check mesh-test-order http://payment:80/ "2h. order -> payment (SHOULD BE DENIED - 403)"
 
 # -----------------------------------------------
 # TEST 3: Retry Policy
@@ -184,7 +173,7 @@ echo ""
 # TEST 4: Retry on real upstream 500
 # -----------------------------------------------
 echo ">>> TEST 4: Real 500 Retry Evidence"
-create_retry_probe
+wait_for_retry_probe
 
 echo "--- 4a. Probe pod log before request ---"
 kubectl logs -n "$NAMESPACE" mesh-retry-probe --tail=5 2>/dev/null || true
