@@ -1,4 +1,4 @@
-# Chạy môi trường Dev và Staging
+# Chạy môi trường Dev và Staging hoặc Job Developer Build
 
 ## 1. Khởi động Cluster
 
