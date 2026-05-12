@@ -1,6 +1,3 @@
 ui:
   image:
     tag: c9938552
-  extraEnvs:
-    - name: API_BASE_PATH
-      value: http://storefront.yas.dev.com/api
