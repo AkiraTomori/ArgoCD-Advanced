@@ -1,3 +1,21 @@
+# Những bước cần cài đặt
+
+- Cần một máy ảo (hoặc một máy tính đủ tài nguyên) để chứa Cluster.
+- Cần cài đặt Docker, kubectl, minikube, yq, helm.
+- Cần cài đặt Jenkins (cài bằng ứng dụng thay vì dùng containers)
+- Sau khi Jenkins tải xong, sử dụng các câu lệnh sau để cài đặt Jenkins và cho phép Jenkins truy cập Minikube
+```bash
+# Cài dặt Jenkins
+sudo usermod -aG docker jenkins
+sudo systemctl restart jenkins
+
+# Jenkins truy cập Minikube
+sudo mkdir -p /var/lib/jenkins/.kube
+sudo cp ~/.kube/config /var/lib/jenkins/.kube/
+sudo chown -R jenkins:jenkins /var/lib/jenkins/.kube/
+```
+- Trước khi cài Jenkins, cần phải tải môi trường Java cho Jenkins (tối thiểu từ phiên bản 21 trở đi)
+
 # Những thiết lập được thay đổi 
 
 - Kí hiệu: DevOps-YAS -> Repository Application, ArgoCD-Advanced -> Repository Configuration.
@@ -377,4 +395,27 @@ searchApplicationConfig:
     url: elasticsearch-es-http.elasticsearch:9200
     username: ${ELASTICSEARCH_USERNAME}
     password: ${ELASTICSEARCH_PASSWORD}
+```
+# Truy cập vào các đường dẫn
+Sau khi thực hiện chạy Developer Build hoặc kích hoạt môi trường Dev/Staging, cần cập nhật vào file hosts như sau:
+```bash
+# Hạ tầng Postgres, Kafka, Elasticsearch, Grafana là dùng chung cho cả ba môi trường
+<PUBLIC-IP> pgoperator.yas.test.com
+<PUBLIC-IP> pgadmin.yas.test.com
+<PUBLIC-IP> akhq.yas.test.com
+<PUBLIC-IP> kibana.yas.test.com
+<PUBLIC-IP> identity.yas.test.com
+<PUBLIC-IP> grafana.yas.test.com
+# Môi trường Test
+<PUBLIC-IP> backoffice.yas.test.com
+<PUBLIC-IP> storefront.yas.test.com
+<PUBLIC-IP> api.yas.test.com
+# Môi trường Dev
+<PUBLIC-IP> backoffice.yas.dev.com
+<PUBLIC-IP> storefront.yas.dev.com
+<PUBLIC-IP> api.yas.dev.com
+# Môi trường Staging
+<PUBLIC-IP> backoffice.yas.staging.com
+<PUBLIC-IP> storefront.yas.staging.com
+<PUBLIC-IP> api.yas.staging.com
 ```
