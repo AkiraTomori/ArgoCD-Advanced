@@ -32,7 +32,7 @@ sudo chown -R jenkins:jenkins /var/lib/jenkins/.kube/
 
 # Một số thay đổi so với Repository gốc
 
-- Sủa đôi đường dẫn của backoffice-bff và storefront-bff ở các đoạn này trong file resources/application.yaml. Lý do, image gốc của nashtech-garage build bị lỗi dẫn đến không truy cập được vào đường dẫn
+- Sủa đổi đường dẫn của backoffice-bff và storefront-bff ở các đoạn này trong file resources/application.yaml. Lý do, image gốc của nashtech-garage build bị lỗi dẫn đến không truy cập được vào đường dẫn
 
 ```yaml
 # backoffice-bff
@@ -396,6 +396,37 @@ searchApplicationConfig:
     username: ${ELASTICSEARCH_USERNAME}
     password: ${ELASTICSEARCH_PASSWORD}
 ```
+Strimzi operator mới (0.46+) không còn hỗ trợ Zookeeper
+Chuyển sang KRaft mode, tạo KafkaNodePool resource
+```yaml
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaNodePool
+metadata:
+  name: combined
+  labels:
+    strimzi.io/cluster: kafka-cluster
+spec:
+  replicas: {{ .Values.kafka.replicas }}
+  roles:
+    - controller
+    - broker
+  template:
+    pod:
+      securityContext:
+        runAsUser: 0
+        runAsGroup: 0
+        fsGroup: 0
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 100Gi
+        deleteClaim: false
+```
+Tài liệu gốc của YAS chỉ dẫn thiếu, sau khi chạy xong file script ./setup-cluster thì cần phải chạy script ./depploy-yas-configuration.sh trước rồi mới chạy script ./deploy-yas-applications
+
+Các môi trường Test, Dev, Staging đều sẽ đọc Configuration trước rồi mới deploy applications
 # Truy cập vào các đường dẫn
 Sau khi thực hiện chạy Developer Build hoặc kích hoạt môi trường Dev/Staging, cần cập nhật vào file hosts như sau:
 ```bash
