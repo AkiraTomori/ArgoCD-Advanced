@@ -426,6 +426,17 @@ spec:
 ```
 Tài liệu gốc của YAS chỉ dẫn thiếu, sau khi chạy xong file script ./setup-cluster thì cần phải chạy script ./depploy-yas-configuration.sh trước rồi mới chạy script ./deploy-yas-applications
 
+Mỗi folder charts của các Service đều có bổ sung thêm đoạn mã dưới đây nhằm giới hạn tài nguyên được phép chạy của các Services
+```yaml
+replicaCount: 1
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+```
 Các môi trường Test, Dev, Staging đều sẽ đọc Configuration trước rồi mới deploy applications
 # Truy cập vào các đường dẫn
 Sau khi thực hiện chạy Developer Build hoặc kích hoạt môi trường Dev/Staging, cần cập nhật vào file hosts như sau:
