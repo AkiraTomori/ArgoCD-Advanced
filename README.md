@@ -113,6 +113,8 @@ kubectl delete -f https://raw.githubusercontent.com/keycloak/keycloak-k8s-resour
 
 - Deploy môi trường Dev và Staging mới tự động hoàn toàn theo quy trình CI/CD. (cần Repo số hai, không dùng Repo gốc vì sẽ gây trạng thái lặp vô hạn).
 
+- Theo thực tế, Dev và Staging là các môi trường song song và dữ liệu ở trong các môi trường này sẽ khác nhau (tuy nhiên mục đích của đồ án là học tập nên sinh viên sẽ thực hiện cả ba môi trường là dùng chung các hạ tầng).
+
 ## 5. Môi trường đang sử dụng
 
 - Một Virtual Machine thông số CPU 6 core và 48GB RAM, Jenkins được cài sẵn ở trên máy VM, theo đúng flow yêu cầu của bài tập sinh viên.
