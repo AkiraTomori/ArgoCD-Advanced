@@ -7,6 +7,8 @@ grafana:
     server:
       domain: *hostname
       root_url: http://grafana.yas.test.com/
+    live:
+      allowed_origins: http://grafana.yas.test.com,https://grafana.yas.test.com
     database:
       type: postgres
       host: postgresql.postgres:5432
