@@ -37,6 +37,8 @@ applicationConfig:
     metrics:
       tags:
         application: ${spring.application.name}
+        service_name: ${spring.application.name}
+        service_namespace: ${POD_NAMESPACE}
     endpoints:
       web:
         exposure:

@@ -56,6 +56,12 @@ spec:
               {{- toYaml . | nindent 12 }}
             {{- end }}
           env:
+            - name: SPRING_APPLICATION_NAME
+              value: {{ include "backend.fullname" . }}
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
             - name: LOGGING_CONFIG
               value: {{ .Values.logbackXmlPath }}
             - name: SPRING_DATASOURCE_URL

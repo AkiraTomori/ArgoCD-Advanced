@@ -23,3 +23,13 @@ spec:
   datasources:
     - datasourceName: prometheus
       inputName: DS_PROMETHEUS
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: observability-dashboard
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/AkiraTomori/DevOps-YAS/7ae96f78/docker/grafana/provisioning/dashboards/observability_dashboard.json"

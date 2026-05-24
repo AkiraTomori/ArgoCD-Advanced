@@ -12,6 +12,7 @@ WAIT_TIMEOUT="${WAIT_TIMEOUT:-180s}"
 
 KAFKA_NS="${KAFKA_NS:-kafka}"
 KAFKA_POD="${KAFKA_POD:-kafka-cluster-combined-0}"
+KAFKA_PVC="${KAFKA_PVC:-data-0-kafka-cluster-combined-0}"
 KAFKA_HOSTPATH="${KAFKA_HOSTPATH:-/tmp/hostpath-provisioner/kafka/data-0-kafka-cluster-combined-0}"
 
 ES_NS="${ES_NS:-elasticsearch}"
@@ -125,7 +126,7 @@ heal_kafka_if_needed() {
     clean_hostpath_on_all_nodes "$KAFKA_HOSTPATH" true
 
     # Delete PVC to force clean rebind if storage metadata is stale.
-    kubectl -n "$KAFKA_NS" delete pvc data-0-kafka-cluster-combined-0 --ignore-not-found >/dev/null 2>&1 || true
+    kubectl -n "$KAFKA_NS" delete pvc "$KAFKA_PVC" --ignore-not-found >/dev/null 2>&1 || true
 
     log "Waiting for Kafka pod to recover"
     wait_pod_ready "$KAFKA_NS" "$KAFKA_POD" || true
