@@ -189,3 +189,10 @@ spec:
                 name: nginx
                 port:
                   number: 80
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx
+  namespace: yas-dev
+
