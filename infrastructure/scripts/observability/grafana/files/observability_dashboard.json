@@ -87,7 +87,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum (\r\n  increase (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
+          "expr": "sum (\r\n  increase (\r\n    http_server_requests_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
           "instant": true,
           "range": false,
           "refId": "A"
@@ -246,9 +246,9 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_response_status_code) (\r\n  label_replace (\r\n    increase (\r\n      http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n    ),\r\n    \"http_response_status_code\",\r\n    \"Unknown\",\r\n    \"http_response_status_code\",\r\n    \"\"\r\n  )\r\n)",
+          "expr": "sum by (status) (\r\n  label_replace (\r\n    increase (\r\n      http_server_requests_seconds_count{service_name=\"$service\"}[$__range]\r\n    ),\r\n    \"status\",\r\n    \"Unknown\",\r\n    \"status\",\r\n    \"\"\r\n  )\r\n)",
           "instant": true,
-          "legendFormat": "{{http_response_status_code}}",
+          "legendFormat": "{{status}}",
           "range": false,
           "refId": "A"
         }
@@ -340,9 +340,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (http_route, http_request_method) (\r\n  rate (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[5m]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\r\n  rate (\r\n    http_server_requests_seconds_count{service_name=\"$service\"}[5m]\r\n  )\r\n)",
           "instant": false,
-          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "legendFormat": "{{method}} {{uri}}",
           "range": true,
           "refId": "A"
         }
@@ -438,7 +438,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase(\r\n    http_server_request_duration_seconds_count{\r\n      service_name=\"$service\", \r\n      http_response_status_code=~\"2..|3..\"\r\n    }[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\r\n  increase(\r\n    http_server_requests_seconds_count{\r\n      service_name=\"$service\", \r\n      status=~\"2..|3..\"\r\n    }[$__range]\r\n  )\r\n)",
           "format": "table",
           "instant": true,
           "range": false,
@@ -451,7 +451,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase(\r\n    http_server_request_duration_seconds_count{\r\n      service_name=\"$service\", \r\n      http_response_status_code=~\"4..|5..\"\r\n    }[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\r\n  increase(\r\n    http_server_requests_seconds_count{\r\n      service_name=\"$service\", \r\n      status=~\"4..|5..\"\r\n    }[$__range]\r\n  )\r\n)",
           "format": "table",
           "hide": false,
           "instant": true,
@@ -476,8 +476,8 @@
               "Value": "Total Success Requests",
               "Value #A": "Successes",
               "Value #B": "Failures",
-              "http_request_method": "Method",
-              "http_route": "Route"
+              "method": "Method",
+              "uri": "Route"
             }
           }
         }
@@ -545,9 +545,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum by (http_route, http_request_method) (\r\n  increase (\r\n    http_server_request_duration_seconds_sum{service_name=\"$service\"}[$__range]\r\n  )\r\n)\r\n/\r\nsum by (http_route, http_request_method) (\r\n  increase (\r\n    http_server_request_duration_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
+          "expr": "sum by (uri, method) (\r\n  increase (\r\n    http_server_requests_seconds_sum{service_name=\"$service\"}[$__range]\r\n  )\r\n)\r\n/\r\nsum by (uri, method) (\r\n  increase (\r\n    http_server_requests_seconds_count{service_name=\"$service\"}[$__range]\r\n  )\r\n)",
           "instant": false,
-          "legendFormat": "{{http_request_method}} {{http_route}}",
+          "legendFormat": "{{method}} {{uri}}",
           "range": true,
           "refId": "A"
         }
@@ -2567,7 +2567,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(http_server_request_duration_seconds_count{service_namespace=~\"$namespace\"}, service_name)",
+        "definition": "label_values(http_server_requests_seconds_count{service_namespace=~\"$namespace\"}, service_name)",
         "hide": 0,
         "includeAll": false,
         "label": "Service",
@@ -2575,7 +2575,7 @@
         "name": "service",
         "options": [],
         "query": {
-          "query": "label_values(http_server_request_duration_seconds_count{service_namespace=~\"$namespace\"}, service_name)",
+          "query": "label_values(http_server_requests_seconds_count{service_namespace=~\"$namespace\"}, service_name)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 1,

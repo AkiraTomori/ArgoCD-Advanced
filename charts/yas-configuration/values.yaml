@@ -42,7 +42,7 @@ applicationConfig:
     endpoints:
       web:
         exposure:
-          include: prometheus, health
+          include: ["prometheus", "health"]
     endpoint:
       health:
         probes:

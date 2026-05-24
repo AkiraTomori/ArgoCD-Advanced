@@ -9,6 +9,9 @@ grafana:
       root_url: http://grafana.yas.test.com/
     live:
       allowed_origins: http://grafana.yas.test.com,https://grafana.yas.test.com
+      # Set max_connections to 0 to disable Grafana Live WebSocket (eliminates WS 400 errors)
+      # in environments where real-time push is not required
+      max_connections: 0
     database:
       type: postgres
       host: postgresql.postgres:5432
@@ -24,5 +27,6 @@ grafana:
     annotations:
       nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
     hosts:
       - *hostname
