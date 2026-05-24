@@ -67,8 +67,7 @@ helm upgrade --install elasticsearch-cluster ./elasticsearch/elasticsearch-clust
 #Install loki
 helm upgrade --install loki grafana/loki \
  --create-namespace --namespace observability \
- -f ./observability/loki.values.yaml \
- --set loki.useTestSchema=true
+ -f ./observability/loki.values.yaml
 
 #Install tempo
 helm upgrade --install tempo grafana/tempo \
@@ -88,6 +87,11 @@ helm upgrade --install cert-manager jetstack/cert-manager \
 #Install opentelemetry-operator
 helm upgrade --install opentelemetry-operator open-telemetry/opentelemetry-operator \
 --create-namespace --namespace observability
+
+# Wait for opentelemetry-operator deployment to be ready
+echo "Waiting for opentelemetry-operator deployment to be ready..."
+kubectl rollout status deployment/opentelemetry-operator -n observability --timeout=120s
+sleep 10
 
 #Install opentelemetry-collector
 helm upgrade --install opentelemetry-collector ./observability/opentelemetry \

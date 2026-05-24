@@ -10,4 +10,4 @@ spec:
       protocol: TCP
       targetPort: 3500
   config: |
-    {{ toYaml .Values.opentelemetryCollectorConfig | nindent 4 }}
+    {{ toYaml .Values.config | nindent 4 }}
